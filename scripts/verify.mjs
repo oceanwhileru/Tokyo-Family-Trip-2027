@@ -15,19 +15,21 @@ const embeddedRelease = html => JSON.parse(html.match(/<script id="trip-release"
 test('fixed itinerary keeps the arrival and return buffers', () => {
   assert.equal(days.length, 5);
   const arrival=days[0].events;
-  assert.equal((time(days[0].date,arrival[4])-time(days[0].date,arrival[3]))/60000,180);
+  assert.equal((time(days[0].date,arrival[3])-time(days[0].date,arrival[2]))/60000,180);
   const departure=days[4].events;
   assert.equal((time(days[4].date,departure[4])-time(days[4].date,departure[3]))/60000,300);
-  assert.equal(arrival[3].time,'14:55');
+  assert.equal(arrival[2].time,'14:55');
   assert.equal(departure[3].time,'11:40');
   assert.equal(departure[4].time,'16:40');
   assert.ok(days[3].b.length>=3);
   assert.ok(days[2].events.some(e=>e.mins==='300 分'));
 });
-test('the Taiwan reminder and Japan return quote have separate records', () => {
+test('the shared agenda retains flight details and the Japan return quote', () => {
   assert.equal(members.length,4);
-  assert.equal(tasks.length,12);
-  assert.equal(tasks[0].due,'2026/12/01 10:00 TST');
+  assert.equal(tasks.length,11);
+  assert.equal(days[0].firstEventIndex,1);
+  assert.equal(days[0].events[0].title,'桃園第一航廈集合');
+  assert.equal(days[4].events.at(-1).title,'抵達桃園第一航廈');
   assert.equal(airport.in[2].cost[0],29000);
   assert.equal(airport.in[3].cost,null);
   assert.equal(airport.out[0].cost[0],16000);

@@ -95,9 +95,9 @@ main{min-height:68vh;padding-block:24px 46px;scroll-margin-top:130px}
 .day-num{font-size:.79rem;font-weight:750;letter-spacing:.08em;color:#d3f6ee}
 .day-short b{line-height:1.3}
 .alert{color:#562e23;background:var(--sand);border-color:#e9a391;border-top:4px solid var(--coral)}
-.dash-alerts .alert:nth-child(2){background:var(--tan);color:#392b21;border-color:#b68d69}
-.dash-alerts .alert:nth-child(3){background:#d6efea;color:#164641;border-color:var(--teal)}
-.dash-alerts .alert:nth-child(4){background:#e3f5ef;color:#164641;border-color:var(--mint)}
+.dash-alerts .alert:nth-child(1){background:var(--tan);color:#392b21;border-color:#b68d69}
+.dash-alerts .alert:nth-child(2){background:#d6efea;color:#164641;border-color:var(--teal)}
+.dash-alerts .alert:nth-child(3){background:#e3f5ef;color:#164641;border-color:var(--mint)}
 .alert .eyebrow{color:var(--rose)}
 .alert.good{background:#e4eee4;color:#204c3f;border-color:#c5dacb}
 .dash-lower{display:grid;grid-template-columns:1.14fr .86fr;gap:13px}
@@ -211,7 +211,7 @@ details[open]>summary{margin-bottom:6px}
 @media(prefers-reduced-motion:reduce){*,*::before,*::after{scroll-behavior:auto!important;transition:none!important}}
 
 </style>
-  <script id="trip-release" type="application/json">{"version":"V2.0.1","deployedAt":"2026-11-25T13:46:42.014Z","buildId":"v2.0.1-9c4a6ec77341"}</script>
+  <script id="trip-release" type="application/json">{"version":"V2.0.2","deployedAt":"2026-11-25T14:00:40.412Z","buildId":"v2.0.2-77ad6fcac648"}</script>
 </head>
 <body>
   <a class="skip" href="#content">跳至內容</a>
@@ -264,7 +264,6 @@ window.TRIP = (() => {
     peachCheck:'https://www.flypeach.com/en/lm/ai/airports/how_to_checkin',
     carry:'https://www.flypeach.com/en/lm/ai/airports/baggage/carry_on_bag',
     bags:'https://www.flypeach.com/en/lm/ai/airports/baggage/checked_in_bag',
-    tpe:'https://www.taoyuan-airport.com/',
     nrt:'https://www.narita-airport.jp/en/',
     nrtShop:'https://www.narita-airport.jp/en/shop/',
     nrtTaxi:'https://www.narita-airport.jp/en/access/taxi/',
@@ -341,8 +340,7 @@ window.TRIP = (() => {
   const event = (time,title,detail,query='',kind='main',cost='',mins='',zone='JST') =>
     ({time,title,detail,query,kind,cost,mins,zone});
   const days = [
-    {id:1,date:'2027-01-24',label:'1/24（日）',area:'上野・入谷',title:'抵達東京・上野入谷',summary:'搭早班機抵達成田，晚上留在飯店附近。',photo:'ueno',walk:'約 15–30 分鐘・低',meet:'08:00 桃園 T1 Peach 櫃位附近集合（台灣時間，規劃）',rest:'飯店大廳、入谷站旁餐廳',backup:'班機或入境延誤時順延入住、晚餐與採買。可在鐵路營運異常時查機場計程車或合法接送。',events:[
-      event('07:00','台灣信用卡送機','一位成人，內湖至桃園。07:00 前後為規劃值，依車程、週日路況與業者確認。Judy 12/1 10:00 台灣時間預約。','Taoyuan Airport Terminal 1','main','預估 NT$0，資格與加價待確認','約 45–75 分','TST'),
+    {id:1,firstEventIndex:1,date:'2027-01-24',label:'1/24（日）',area:'上野・入谷',title:'抵達東京・上野入谷',summary:'搭早班機抵達成田，晚上留在飯店附近。',photo:'ueno',walk:'約 15–30 分鐘・低',meet:'08:00 桃園 T1 Peach 櫃位附近集合（台灣時間，規劃）',rest:'飯店大廳、入谷站旁餐廳',backup:'班機或入境延誤時順延入住、晚餐與採買。可在鐵路營運異常時查機場計程車或合法接送。',events:[
       event('08:00','桃園第一航廈集合','10:40 起飛。Peach 國際線一般報到窗按起飛倒推約 08:40–09:50，出發前核對訂單。','Taoyuan Airport Terminal 1','main','','','TST'),
       event('10:40','MM626 桃園起飛','搭乘 Peach Aviation。飛行時間約 3 小時 15 分。','Taoyuan Airport Terminal 1','main','','','TST'),
       event('14:55','成田抵達・保留至少三小時','14:55–17:55 僅安排入境、領行李及赴飯店。若延誤，晚間活動隨之順延。','Narita Airport Terminal 1','main','','至少 180 分'),
@@ -387,12 +385,11 @@ window.TRIP = (() => {
       event('10:30','整理行李與退房','依飯店訂單辦退房，與家人確認護照、行李及退稅品。',hotelName),
       event('11:40','完整保留五小時給返程','最晚 11:40 JST 開始赴機場。私人包車使用者報價 ¥16,000／車，尚未預訂，另可選 Skyliner 或其他京成路線。','Narita Airport Terminal 1 North Wing','main','包車 ¥4,000／人','至少 300 分'),
       event('16:40','MM623 成田起飛','前往 T1 北翼四樓報到。按訂單核對時刻與航廈，機場採買視候機餘裕。','Narita Airport Terminal 1 North Wing'),
-      event('20:00','抵達桃園・台灣信用卡接機','一位成人。入境、領行李與接機集合點、延誤等候政策均待 Judy 確認。','Taoyuan Airport Terminal 1','main','預估 NT$0，資格待確認','','TST')
+      event('20:00','抵達桃園第一航廈','入境並領取托運行李。','Taoyuan Airport Terminal 1','main','','','TST')
     ]}
   ];
   const task=(id,title,owner,due,note,url)=>({id,title,owner,due,note,url});
   const tasks=[
-    task('taiwan','預約台灣信用卡機場來回接送','Judy','2026/12/01 10:00 TST','去回均為一位成人。確認卡別、資格、次數、大箱、收費、取消、去程時間、接機集合及延誤。',src.tpe),
     task('clad','預訂 HOTEL CLAD 兩間富士景房','Judy','儘早，規劃','雙床一泊二食優先，填兩房各兩成人，保留含稅總價和取消條款。',src.clad),
     task('vessel','確認東京飯店保留四晚','Judy','入住前，規劃','確認 1/26 外宿當晚保留兩房與大型行李存放。',src.hotel),
     task('license','確認 Vito 台灣駕照正本與日文譯本','Vito','租車前，規劃','查正本效期、譯本、護照入境日期及門市付款文件。',src.thb),
@@ -735,7 +732,7 @@ window.TRANSPORT = (() => {
     return '<p class="muted small">'+esc(memory.profile)+' 已勾選 '+done+' / '+D.tasks.length+' · 儲存在目前瀏覽器</p><div class="task-list">'+D.tasks.map(t=>
       '<div class="task"><input id="task-'+t.id+'" type="checkbox" data-check="tasks:'+t.id+'" '+(me().tasks[t.id]?'checked':'')+
       '><div><label for="task-'+t.id+'">'+esc(t.title)+'</label><div class="record-meta">'+esc(t.owner+' · '+t.due)+'</div><p class="small">'+esc(t.note)+'</p>'+
-      ext(t.url,t.id==='taiwan'?'桃園機場（信用卡資訊查發卡行）':'官方資訊')+'</div></div>').join('')+'</div>';
+      ext(t.url,'官方資訊')+'</div></div>').join('')+'</div>';
   }
   function dashboard() {
     const now=new Date();
@@ -745,8 +742,7 @@ window.TRANSPORT = (() => {
     const over=today>D.days[4].date;
     const upcoming=D.days.flatMap(d=>d.events.filter(e=>e.kind==='main').map(e=>({d,e,ts:when(d,e)}))).filter(x=>x.ts>now).sort((a,b)=>a.ts-b.ts)[0];
     const next=upcoming?upcoming.d.label+' '+upcoming.e.time+' '+upcoming.e.zone+' · '+upcoming.e.title:'五天行程已結束';
-    const reminders=[['12/1 10:00 台灣時間','Judy 預約台灣信用卡來回接送，兩趟各一位成人，資格與費用待確認。','#transport/taiwan'],
-      ['HOTEL CLAD 尚未訂房','1/26 兩間富士景房，優先雙床房與一泊二食。','#transport/stay'],
+    const reminders=[['HOTEL CLAD 尚未訂房','1/26 兩間富士景房，優先雙床房與一泊二食。','#transport/stay'],
       ['御殿場租車尚未預訂','1/26–1/27 行程區段，先確認雪胎與駕駛條件。','#transport/rental'],
       ['日本私人包車待決定','1/28 四人 ¥16,000 為使用者報價。11:40 JST 前開始赴機場。','#transport/airport']];
     return '<section class="hero">'+photo('fuji',true)+'<div><p class="hero-meta">2027.01.24 – 01.28 ｜ 五天四夜</p><h1><span>Tokyo Family</span><span>Trip <b class="year">2027</b></span></h1>'+
@@ -758,7 +754,7 @@ window.TRANSPORT = (() => {
       '<div class="dash-lower">'+section(tripDay?'今天在日本':over?'旅行回顧':'出發前','<article class="panel"><h3>'+esc(tripDay?tripDay.title:over?'回顧收藏與費用':'下一個活動')+'</h3><p>'+esc(tripDay?tripDay.summary:next)+'</p>'+
         (tripDay?'<p class="small muted">'+esc(next)+'</p>':'')+'<div class="tools-row">'+internal(tripDay?'itinerary/'+tripDay.id:'itinerary/1','查看行程',true)+internal('tools','旅行工具')+'</div></article>')+
       section('三地天氣','<div id="weather-view">'+weatherView()+'</div>',button('weather','更新'))+'</div>'+
-      section(over?'出發前安排紀錄':'住宿與交通提醒','<div class="grid four dash-alerts">'+reminders.map(([title,detail,url])=>
+      section(over?'出發前安排紀錄':'住宿與交通提醒','<div class="grid dash-alerts">'+reminders.map(([title,detail,url])=>
         '<article class="alert"><h3>'+esc(title)+'</h3><p class="small">'+esc(detail)+'</p><div class="tools-row">'+internal(url.slice(1),'查看詳情')+'</div></article>').join('')+'</div>')+
       section('旅行準備待辦','<article class="panel" id="tasks">'+taskList()+'</article>');
   }
@@ -810,7 +806,8 @@ window.TRANSPORT = (() => {
     draw();
   }
   function eventTile(e,day,i,plan) {
-    const key=day.id+'-'+plan+'-'+i;
+    // Retain saved completion keys when a leading event has been removed.
+    const key=day.id+'-'+plan+'-'+(i+(day.firstEventIndex??0));
     return '<article class="panel timeline-item '+(e.kind==='option'?'option':'')+'"><div><div class="time">'+e.time+'</div><div class="small muted">'+(e.zone==='TST'?'台灣時間':'JST')+'</div></div><div>'+
       '<h3>'+esc(e.title)+'</h3><p>'+esc(e.detail)+'</p>'+chips(chip(e.kind==='option'?'自由選項':'主要安排',e.kind==='option'?'easy':''),e.mins?chip(e.mins):'',e.cost?chip(e.cost,'estimated'):'')+
       '<div class="tools-row">'+ticks('done',key,'已完成')+(e.query?'<span class="links">'+ext(map(e.query),'Google Maps')+'</span>':'')+'</div></div></article>';
@@ -823,10 +820,10 @@ window.TRANSPORT = (() => {
     const primary=ev.map((e,i)=>e.kind==='main'?eventTile(e,day,i,plan):'').join('');
     const optional=ev.map((e,i)=>e.kind==='option'?eventTile(e,day,i,plan):'').join('');
     let extra='';
-    if(day.id===1) extra=internal('transport/airport','到飯店的交通')+' '+internal('transport/taiwan','台灣信用卡送機')+' '+internal('transport/stay','入谷飯店');
+    if(day.id===1) extra=internal('transport/airport','到飯店的交通')+' '+internal('transport/stay','入谷飯店');
     if(day.id===2) extra=internal('shopping','銀座店鋪')+' '+internal('dining','找午餐與晚餐')+links([[routeLink(D.places.hotel.en,'Ginza Station','transit'),'入谷至銀座'],[routeLink('HANDS Ginza','Shiseido Parlour','walking','MUJI Ginza|Matsuya Ginza|Ginza Mitsukoshi|GINZA SIX'),'銀座北至南步行路線'],[map('歌舞伎座 東銀座'),'附近文化景點：歌舞伎座']]);
     if(day.id===3||day.id===4) extra=internal('transport/rental','取還車與費用試算')+' '+internal('transport/roads','停車與道路')+' '+internal('transport/fuji','大眾運輸備案')+links([[day.id===3?S.outletMap:routeLink('HOTEL CLAD','Oishi Park','driving','Kitaguchi Hongu Fuji Sengen Jinja'),'路線與動線'],[map('ENEOS 御殿場駅'),'御殿場加油站'],[map('ENEOS 河口湖駅'),'河口湖加油站']]);
-    if(day.id===5) extra=internal('transport/airport','包車與大眾運輸比較')+' '+internal('transport/taiwan','台灣信用卡接機')+links([[S.nrtShop,'成田 T1 餐飲與伴手禮']]);
+    if(day.id===5) extra=internal('transport/airport','包車與大眾運輸比較')+links([[S.nrtShop,'成田 T1 餐飲與伴手禮']]);
     return tabs('itinerary',D.days.map(d=>[d.id,'DAY '+d.id+'｜'+d.label]),day.id)+
       '<section class="photo-cover">'+photo(day.photo,true)+'<p class="eyebrow">DAY '+day.id+' · '+day.label+'</p><h1>'+esc(day.title)+'</h1><p>'+esc(day.summary)+'</p></section>'+
       section('集合與休息','<div class="grid two">'+card('集合',plan==='b'?'10:00 HOTEL CLAD 大廳集合並確認交通。':day.meet)+card('步行與休息',day.walk+'。'+day.rest)+'</div>')+
@@ -895,18 +892,12 @@ window.TRANSPORT = (() => {
     ['御殿場 ↔ 河口湖','先核對 Outlet 至河口湖直達巴士的運行日、是否要預約、行李規定。遇停駛改御殿場直接返東京。',S.fujiBus,routeLink('Gotemba Premium Outlets','Kawaguchiko Station')],
     ['河口湖 ↔ 東京','查直達新宿・東京高速巴士或 JR 富士回遊。配合還車安排空位，搭車前留轉乘時間。',S.fujiReturn,routeLink('Kawaguchiko Station','Busta Shinjuku')]
   ];
-  const transportTabs=[['flights','航班'],['taiwan','台灣接送'],['airport','成田往返'],['fuji','市區・富士山'],['rental','租車自駕'],['roads','停車及道路'],['stay','兩間飯店']];
+  const transportTabs=[['flights','航班'],['airport','成田往返'],['fuji','市區・富士山'],['rental','租車自駕'],['roads','停車及道路'],['stay','兩間飯店']];
   function flights() {
     return '<div class="grid two">'+card('去程｜MM626','1/24（日）10:40 台灣時間 桃園 T1 → 14:55 JST 成田 T1。抵達後至少保留三小時，到飯店目標 17:55。',chips(chip('使用者提供'),badge('Pending'))+links([[S.peachTPE,'桃園 T1 官方指引'],[map('Taoyuan International Airport Terminal 1'),'桃園 T1 地圖']]))+
       card('回程｜MM623','1/28（四）16:40 JST 成田 T1 北翼 4F → 20:00 台灣時間 桃園 T1。最晚 11:40 JST 開始赴機場。',chips(chip('使用者提供'),badge('Pending'))+links([[S.peachNRT,'成田 T1 官方指引'],[map('Narita Terminal 1 North Wing'),'成田 T1 北翼地圖']]))+'</div>'+
       section('航班時刻與行李查核','<article class="panel"><p>航空公司機場指南已核對兩地均為 T1。去回時刻保留訂單原資料，官方航線可用日期下拉查詢，出票與變更以訂單為準。公開冬季班表的非官方交叉資料另列 12–2 月回程 16:35，尚待 Peach 指定日期班表或訂單核實。如確認提前 5 分鐘，五小時緩衝的出發上限也前移至 11:35。</p>'+
       '<p>Peach 國際線一般報到窗口為起飛前 120 至 50 分鐘，登機口一般為起飛前 30 分鐘。隨身行李含個人物品合計兩件、總重 7 kg，登機箱三邊合計 115 cm 以內且須符合單邊限制。托運件數看票種與加購，單件標準 20 kg，超重按官網。</p>'+links([[S.peachLookup,'指定日期班表'],[S.peachStatus,'Peach 航班狀態'],[S.peachCheck,'報到規定'],[S.carry,'隨身行李'],[S.bags,'托運行李']])+'</article>');
-  }
-  function taiwanPickup() {
-    return '<article class="alert"><h3>12/1（二）10:00 台灣時間 · Judy</h3><p>去程與回程皆規劃使用信用卡贈送的機場接送，均尚未預訂，預計 NT$0，依持卡資格與加價條件。</p></article>'+
-      section('兩趟接送','<div class="grid two">'+card('1/24 去程・一位成人','內湖 → 桃園 T1。規劃約 07:00 接客、08:00 至櫃位集合，實際依業者與路況。')+
-      card('1/28 回程・一位成人','桃園 T1 → 內湖。20:00 班機抵達後留入境、領行李時間。與業者確認等待政策、接機約定與航班延遲時的處理。')+'</div>')+
-      section('預約前確認','<article class="panel"><p>詢問發卡行：免費來回資格、剩餘次數、預約期限、行李箱件數與尺寸、加大車型、服務地區及加價、取消與延誤。確認去程時間、回程等候和集合點。</p>'+links([[S.tpe,'桃園機場交通與航廈']])+'</article>');
   }
   function range(values,count=1) {
     if(!values)return '需詢價';
@@ -999,9 +990,9 @@ window.TRANSPORT = (() => {
         links([[map('ENEOS 御殿場駅'),'御殿場站附近加油'],[map('ENEOS 河口湖駅'),'河口湖站附近加油'],[map('EXPASA 足柄 SA'),'足柄服務區']]));
   }
   function transport(tab) {
-    const routes={flights,taiwan:taiwanPickup,airport,fuji:fujiTransport,rental,roads,stay};
+    const routes={flights,airport,fuji:fujiTransport,rental,roads,stay};
     const type=Object.hasOwn(routes,tab)?tab:'flights';
-    return heading('交通導航','航班、機場接送、東京市區及富士山交通。')+tabs('transport',transportTabs,type)+routes[type]();
+    return heading('交通導航','航班、成田往返、東京市區及富士山交通。')+tabs('transport',transportTabs,type)+routes[type]();
   }
   function fxBrief() {
     const tag={live:'最新公布',cached:'上次取得',manual:'手動估算',reference:'離線參考'}[fx.value.mode];
@@ -1111,8 +1102,8 @@ window.TRANSPORT = (() => {
       '<p>下載單檔後可以直接用瀏覽器開啟。離線可用行程、相片、店鋪搜尋、清單與試算。</p><div class="tools-row"><a class="btn primary" href="Tokyo-Family-Trip-2027-offline.html" download>下載單檔離線版</a></div>';
     return heading('資料與離線版','研究基準 '+D.checked)+
       '<article class="panel"><h2>查核狀態</h2>'+chips(badge('Confirmed'),badge('Estimated'),badge('Pending'),badge('Live'))+
-      '<p>官方通用資訊已核對，以旅行日業者公告為準。旅行意向與訂房狀態獨立記錄。使用者資料包括預訂住宿、航班時刻、成員分工、私人包車報價、接送規劃及行程緩衝。規劃費用與時間可隨後續報價調整。</p></article>'+
-      section('待複核資訊','<article class="panel"><ul><li>Peach 指定日航班時刻與票種、成田包車和台灣信用卡接送。</li><li>HOTEL CLAD 請重查下單時庫存、最終價格、免費取消時點及行李寄存。</li><li>租車車級、雪胎、跨縣、保險和取還店。班次、車票、餐廳與停車等依指定日公告。</li></ul></article>')+
+      '<p>官方通用資訊已核對，以旅行日業者公告為準。旅行意向與訂房狀態獨立記錄。使用者資料包括預訂住宿、航班時刻、成員分工、私人包車報價及行程緩衝。規劃費用與時間可隨後續報價調整。</p></article>'+
+      section('待複核資訊','<article class="panel"><ul><li>Peach 指定日航班時刻與票種、成田包車。</li><li>HOTEL CLAD 請重查下單時庫存、最終價格、免費取消時點及行李寄存。</li><li>租車車級、雪胎、跨縣、保險和取還店。班次、車票、餐廳與停車等依指定日公告。</li></ul></article>')+
       section('官方資料','<div class="grid two">'+sourceGroups.map(([title,items])=>'<article class="card"><h3>'+esc(title)+'</h3>'+links(items)+'</article>').join('')+'</div>')+
       section('離線及個人資料','<article class="panel">'+offline+'<p>個人勾選、收藏、購物和費用存在目前瀏覽器，四位家人可分別選名字。清單不會跨裝置同步，同一瀏覽器的姓名切換可查看各自本機資料。清除瀏覽器資料可能一併清除紀錄。</p></article>')+
       section('照片來源','<article class="panel"><p>照片取自 Wikimedia Commons，縮放與壓縮顯示。</p><ul>'+credits.map(([title,author,license,file,link])=>'<li>'+esc(title+' · '+author)+' · '+ext('https://commons.wikimedia.org/wiki/File:'+encodeURIComponent(file),'原始檔')+' · '+ext(link,license)+'</li>').join('')+'</ul></article>');

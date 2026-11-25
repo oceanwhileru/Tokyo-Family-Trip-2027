@@ -11,7 +11,6 @@ window.TRIP = (() => {
     peachCheck:'https://www.flypeach.com/en/lm/ai/airports/how_to_checkin',
     carry:'https://www.flypeach.com/en/lm/ai/airports/baggage/carry_on_bag',
     bags:'https://www.flypeach.com/en/lm/ai/airports/baggage/checked_in_bag',
-    tpe:'https://www.taoyuan-airport.com/',
     nrt:'https://www.narita-airport.jp/en/',
     nrtShop:'https://www.narita-airport.jp/en/shop/',
     nrtTaxi:'https://www.narita-airport.jp/en/access/taxi/',
@@ -88,8 +87,7 @@ window.TRIP = (() => {
   const event = (time,title,detail,query='',kind='main',cost='',mins='',zone='JST') =>
     ({time,title,detail,query,kind,cost,mins,zone});
   const days = [
-    {id:1,date:'2027-01-24',label:'1/24（日）',area:'上野・入谷',title:'抵達東京・上野入谷',summary:'搭早班機抵達成田，晚上留在飯店附近。',photo:'ueno',walk:'約 15–30 分鐘・低',meet:'08:00 桃園 T1 Peach 櫃位附近集合（台灣時間，規劃）',rest:'飯店大廳、入谷站旁餐廳',backup:'班機或入境延誤時順延入住、晚餐與採買。可在鐵路營運異常時查機場計程車或合法接送。',events:[
-      event('07:00','台灣信用卡送機','一位成人，內湖至桃園。07:00 前後為規劃值，依車程、週日路況與業者確認。Judy 12/1 10:00 台灣時間預約。','Taoyuan Airport Terminal 1','main','預估 NT$0，資格與加價待確認','約 45–75 分','TST'),
+    {id:1,firstEventIndex:1,date:'2027-01-24',label:'1/24（日）',area:'上野・入谷',title:'抵達東京・上野入谷',summary:'搭早班機抵達成田，晚上留在飯店附近。',photo:'ueno',walk:'約 15–30 分鐘・低',meet:'08:00 桃園 T1 Peach 櫃位附近集合（台灣時間，規劃）',rest:'飯店大廳、入谷站旁餐廳',backup:'班機或入境延誤時順延入住、晚餐與採買。可在鐵路營運異常時查機場計程車或合法接送。',events:[
       event('08:00','桃園第一航廈集合','10:40 起飛。Peach 國際線一般報到窗按起飛倒推約 08:40–09:50，出發前核對訂單。','Taoyuan Airport Terminal 1','main','','','TST'),
       event('10:40','MM626 桃園起飛','搭乘 Peach Aviation。飛行時間約 3 小時 15 分。','Taoyuan Airport Terminal 1','main','','','TST'),
       event('14:55','成田抵達・保留至少三小時','14:55–17:55 僅安排入境、領行李及赴飯店。若延誤，晚間活動隨之順延。','Narita Airport Terminal 1','main','','至少 180 分'),
@@ -134,12 +132,11 @@ window.TRIP = (() => {
       event('10:30','整理行李與退房','依飯店訂單辦退房，與家人確認護照、行李及退稅品。',hotelName),
       event('11:40','完整保留五小時給返程','最晚 11:40 JST 開始赴機場。私人包車使用者報價 ¥16,000／車，尚未預訂，另可選 Skyliner 或其他京成路線。','Narita Airport Terminal 1 North Wing','main','包車 ¥4,000／人','至少 300 分'),
       event('16:40','MM623 成田起飛','前往 T1 北翼四樓報到。按訂單核對時刻與航廈，機場採買視候機餘裕。','Narita Airport Terminal 1 North Wing'),
-      event('20:00','抵達桃園・台灣信用卡接機','一位成人。入境、領行李與接機集合點、延誤等候政策均待 Judy 確認。','Taoyuan Airport Terminal 1','main','預估 NT$0，資格待確認','','TST')
+      event('20:00','抵達桃園第一航廈','入境並領取托運行李。','Taoyuan Airport Terminal 1','main','','','TST')
     ]}
   ];
   const task=(id,title,owner,due,note,url)=>({id,title,owner,due,note,url});
   const tasks=[
-    task('taiwan','預約台灣信用卡機場來回接送','Judy','2026/12/01 10:00 TST','去回均為一位成人。確認卡別、資格、次數、大箱、收費、取消、去程時間、接機集合及延誤。',src.tpe),
     task('clad','預訂 HOTEL CLAD 兩間富士景房','Judy','儘早，規劃','雙床一泊二食優先，填兩房各兩成人，保留含稅總價和取消條款。',src.clad),
     task('vessel','確認東京飯店保留四晚','Judy','入住前，規劃','確認 1/26 外宿當晚保留兩房與大型行李存放。',src.hotel),
     task('license','確認 Vito 台灣駕照正本與日文譯本','Vito','租車前，規劃','查正本效期、譯本、護照入境日期及門市付款文件。',src.thb),
