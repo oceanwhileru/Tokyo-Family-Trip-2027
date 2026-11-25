@@ -533,6 +533,7 @@ window.TRANSPORT = (() => {
     ['transport','交通'],['tools','旅行工具','工具'],['sources','資料與離線','資料']
   ];
   const photoNames = {fuji:'河口湖畔的富士山',ueno:'上野站正門',ginza:'銀座四丁目街景',gotemba:'御殿場 Premium Outlets',narita:'成田機場第一航廈'};
+  const sharedExpenseSheet = 'https://docs.google.com/spreadsheets/d/16OU0Qs6VKAxtWk8WAOqO6zI-ulmPC3-Z/edit?gid=1455147624#gid=1455147624';
   const FX_DEFAULT = {rate:0.20688,date:'2026-11-25',mode:'reference'};
   const fx = {value:FX_DEFAULT,message:''};
   const weather = {message:'',value:[],running:false,attempted:false};
@@ -950,7 +951,9 @@ window.TRANSPORT = (() => {
     const yen=rows.filter(r=>r.currency==='JPY').reduce((sum,row)=>sum+row.amount,0);
     const nt=rows.filter(r=>r.currency==='TWD').reduce((sum,row)=>sum+row.amount,0);
     const payments=['JPY','TWD'].flatMap(code=>settle(rows,code).map(([from,to,value])=>'<li>'+esc(from+' → '+to+' '+(code==='JPY'?jpy(value):twd(value)))+'</li>'));
-    return '<div class="grid two"><article class="panel"><h2>'+esc(memory.profile)+' 的費用分攤</h2><p class="muted">在同一裝置、同一使用者下維護一份分帳。各幣別獨立結算。</p>'+
+    return '<article class="panel"><h2>全家共用分帳</h2><p>到 Google 試算表一起登記代墊、分攤和還款。請用已獲分享權限的 Google 帳號開啟。</p>'+
+      links([[sharedExpenseSheet,'開啟共用 Google 試算表']])+'</article>'+
+      '<div class="grid two section"><article class="panel"><h2>'+esc(memory.profile)+' 的個人試算</h2><p class="muted">試算紀錄保存在這台裝置的瀏覽器。各幣別獨立結算。</p>'+
       '<form class="form-grid section" id="expense-form"><label>項目<input name="name" maxlength="100" required placeholder="例：成田包車"></label><label>金額<input name="amount" type="number" min="1" max="99999999" step="1" required inputmode="numeric"></label><label>幣別<select name="currency"><option>JPY</option><option>TWD</option></select></label><label>代墊人<select name="payer">'+options(D.members,memory.profile)+'</select></label>'+
       '<fieldset class="wide"><legend>分攤成員</legend><div class="member-row">'+D.members.map(n=>'<label class="inline-check"><input type="checkbox" name="people" value="'+n+'" checked>'+n+'</label>').join('')+'</div></fieldset>'+
       '<button type="submit" class="btn primary">加入支出</button></form></article><article class="panel"><h2>結算</h2><p class="result">'+jpy(yen)+' ＋ '+twd(nt)+'<br>總計約 '+twd(yen*fx.value.rate+nt)+'</p>'+
