@@ -19,10 +19,17 @@ window.TRANSPORT = (() => {
     toyotaOptions:'https://rent.toyota.co.jp/global_eng/service/option.html',
     toyotaCancel:'https://rent.toyota.co.jp/global_eng/faq/reserve.html',
     nipponGotemba:'https://store.nipponrentacar.co.jp/en/b/nrs/info/470256/',
+    nipponUeno:'https://store.nipponrentacar.co.jp/en/b/nrs/info/512011/',
+    outletUenoBus:'https://www.premiumoutlets.co.jp/cht/gotemba/access/detail7013.html',
+    outletTokyoBus:'https://www.premiumoutlets.co.jp/gotemba/access/bus/detail37.html',
+    outletBusGuide:'https://www.jrbuskanto.co.jp/jwp/bus_info/guide',
+    outletBusBooking:'https://www.kousokubus.net/',
+    uenoBusStop:'https://www.jrbuskanto.co.jp/bus_stop/etc_map.cfm?code=130005&pref_code=13',
+    tokyoBusStop:'https://www.jrbuskanto.co.jp/jwp/bus_stop/tokyo',
+    metroFare:'https://www.tokyometro.jp/ticket/types/regular/index.html',
     outletName:'https://www.premiumoutlets.co.jp/en/gotemba/brands/shop_name.html',
     taxDetail:'https://www.nta.go.jp/publication/pamph/shohi/menzei/202506/pdf/0025006-106.pdf',
-    iriyaMap:'https://www.tokyometro.jp/station/iriya/yardmap/index_print.html',
-    romance:'https://www.odakyu.jp/english/romancecar/'
+    iriyaMap:'https://www.tokyometro.jp/station/iriya/yardmap/index_print.html'
   });
   const zones=[
     venue('gucci',2,'Gucci','グッチ','Gucci','Gotemba Premium Outlets',src.outletName,'精品','依品牌與園區',{zone:'WEST ZONE'}),
@@ -35,20 +42,22 @@ window.TRANSPORT = (() => {
     venue('foodhall',2,'ITADAKI TERRACE 食堂','いただきテラス','Itadaki Terrace','Gotemba Premium Outlets HILL SIDE',src.outletBrands,'咖啡甜點','依店與園區',{zone:'HILL SIDE'})
   ];
   const fields=[
-    ['base','基本租車費','¥'],['winter','雪胎','¥'],['awd','4WD 車型差額','¥'],
+    ['base','租車費／報價小計','¥'],['winter','雪胎','¥'],['awd','4WD 車型差額','¥'],
     ['cdw','免責補償','¥'],['noc','NOC 補償','¥'],['insurance','其他保險','¥'],
     ['etc','ETC 卡及設備','¥'],['toll','高速過路費','¥'],['parking','停車','¥'],
     ['oneway','異地還車','¥'],['local','門市接駁與市區交通（四人）','¥'],
     ['bus','巴士與鐵路（四人）','¥'],['other','其他稅金或必要費用','¥'],
     ['km','全程駕駛距離','km'],['kmpl','油耗','km/L'],['fuel','每公升油價','¥/L']
   ];
+  const outletBus = {weekday:[1900,2000],special:[2100,2200],uenoMetroPaper:180};
+  const groupBusUpper = outletBus.weekday[1]*window.TRIP.members.length;
   const plans=[
-    {id:'a',name:'A｜東京取還',time:'6–8 小時',mid:7,drive:'4–5.5 小時',transfer:'0–1 次',comfort:'行李便利，東京市區與遠距離駕駛',route:'入谷 → 東京側門市 → 御殿場 → 富士吉田／河口湖 → 東京門市',basis:'規劃 1/26 08:30–1/27 18:30，約 34 小時。兩天機動性高，需預留東京回程塞車、加油與門市關門。',numbers:[34100,3300,2200,2200,2200,0,550,6600,0,0,1200,0,0,300,11,175]},
-    {id:'b',name:'B｜御殿場取還',time:'6.5–9 小時',mid:7.75,drive:'2.5–3.5 小時',transfer:'2–4 次',comfort:'少開東京市區，需搬運戰利品上巴士',route:'新宿 → 御殿場站 → Outlet／CLAD → 富士山往返 → 御殿場站 → 新宿',basis:'規劃 1/26 約 11:00–1/27 16:30，約 29.5 小時。御殿場站門市回圈較好確認；兩個半天中只有後段消耗較多里程。',numbers:[34100,3300,2200,2200,2200,0,550,1200,0,0,2400,16000,0,115,11,175]},
-    {id:'b24',name:'B 變體｜1/27 才租',time:'6.5–9 小時',mid:7.75,drive:'2.5–3 小時',transfer:'3–5 次',comfort:'首日直達 Outlet，隔日需安排接駁至門市',route:'新宿 → Outlet／CLAD；次日御殿場站取還 → 北口本宮／大石公園 → 御殿場站 → 新宿',basis:'首選自駕草案。1/26 可直接保住購物時間；1/27 估 10:45–16:30，費用保守按 24 小時級距。若門市至飯店接駁及回東京巴士時段無法銜接，改比較 C。',numbers:[22000,1650,1100,1100,1100,0,550,1200,0,0,2400,16000,0,105,11,175]},
-    {id:'c',name:'C｜御殿場取・河口湖還',time:'5.5–7.5 小時',mid:6.5,drive:'1.5–2.5 小時',transfer:'3–5 次',comfort:'減少山區折返，需搬運購物袋及過夜行李',route:'新宿 → 御殿場取車 → CLAD → 北口本宮／大石公園 → 河口湖還車 → 新宿',basis:'次選。規劃 1/26 11:00–1/27 15:30，約 28.5 小時。只有業者確認跨靜岡／山梨、指定車型與雪胎可異地還車才成立；河口湖門市至車站接送須確認。',numbers:[34100,3300,2200,2200,2200,0,550,1000,0,8800,2400,16800,0,75,11,175]},
-    {id:'d',name:'D｜御殿場取・東京還',time:'6–8.5 小時',mid:7.25,drive:'3.5–4.5 小時',transfer:'1–3 次',comfort:'返東京可直接載行李，需開進都市',route:'新宿 → 御殿場取車 → CLAD → 富士山 → 東京／上野還車',basis:'規劃 1/26 11:00–1/27 18:30，約 31.5 小時。戰利品多時方便，異地費、首都高及東京晚尖峰需確認。',numbers:[34100,3300,2200,2200,2200,0,550,4200,0,11000,2000,8000,0,210,11,175]},
-    {id:'public',name:'基準｜全程大眾運輸',time:'7–9.5 小時',mid:8.25,drive:'0 小時',transfer:'3–6 次',comfort:'免開車，巴士空位、行李規格和轉乘最重要',route:'新宿 → Outlet／CLAD → 河口湖巴士（營運時） → 新宿；或直接從御殿場返東京',basis:'以有河口湖停留、附區域巴士的版本估算，若縮短為御殿場往返，時間與金額均低於此基準。道路停駛時查鐵路。',numbers:[0,0,0,0,0,0,0,0,0,0,2400,26600,0,0,0,0]}
+    {id:'a',name:'A｜Nippon 兩天・上野取還',quote:true,time:'6–8 小時',mid:7,drive:'4–5.5 小時',transfer:'0–1 次',comfort:'行李便利，兩天均可開車。回到上野時留時間加油及辦還車。',route:'上野站前取車 → 御殿場 Premium Outlets／HOTEL CLAD → 富士山周邊 → 上野站前還車',basis:'1/26 09:00 取車，1/27 20:00 還車，門市均為上野站前。高速過路費採使用者提供的 ¥3,600。',numbers:[37180,0,0,0,0,0,0,3600,0,0,0,0,0,0,11,175]},
+    {id:'d',name:'D｜Nippon 一天・御殿場取／上野還',quote:true,time:'6–8.5 小時',mid:7.25,drive:'3.5–4.5 小時',transfer:'1–3 次',comfort:'首日搭巴士與住一晚，隔天開車回上野。',route:'1/26 入谷 → 上野入谷口或東京站 → 御殿場 Premium Outlets／HOTEL CLAD；1/27 御殿場站取車 → 富士山周邊 → 上野站前還車',basis:'1/27 09:00 御殿場站取車，20:00 上野站前還車。取車前確認清晨接駁或預約計程車，回程高速費另查。',numbers:[26510,0,0,0,0,0,0,0,0,0,0,groupBusUpper,0,0,11,175]},
+    {id:'b',name:'B｜御殿場取還',time:'6.5–9 小時',mid:7.75,drive:'2.5–3.5 小時',transfer:'2–4 次',comfort:'少開東京市區，需搬運戰利品上巴士',route:'上野／東京站 → Premium Outlets → 御殿場站取還 → Premium Outlets → 上野／東京站',basis:'規劃 1/26 約 11:00–1/27 16:30，約 29.5 小時。御殿場站門市回圈較好確認；兩個半天中只有後段消耗較多里程。',numbers:[34100,3300,2200,2200,2200,0,550,1200,0,0,2400,2*groupBusUpper,0,115,11,175]},
+    {id:'b24',name:'B 變體｜1/27 才租',time:'6.5–9 小時',mid:7.75,drive:'2.5–3 小時',transfer:'3–5 次',comfort:'首日直達 Outlet，隔日需安排接駁至門市',route:'上野／東京站 → Outlet／CLAD；次日御殿場站取還 → 富士山周邊 → Outlet → 上野／東京站',basis:'1/26 搭巴士。1/27 估 10:45–16:30 御殿場同站還車，租金保守按 24 小時級距。',numbers:[22000,1650,1100,1100,1100,0,550,1200,0,0,2400,2*groupBusUpper,0,105,11,175]},
+    {id:'c',name:'C｜御殿場取・河口湖還',time:'5.5–7.5 小時',mid:6.5,drive:'1.5–2.5 小時',transfer:'3–5 次',comfort:'減少山區折返，需搬運購物袋及過夜行李',route:'上野／東京站 → Premium Outlets → 御殿場取車 → CLAD → 河口湖還車 → 東京站／上野',basis:'規劃 1/26 11:00–1/27 15:30，約 28.5 小時。先確認業者允許指定車型與雪胎車輛跨縣還車；河口湖門市至車站接送另查。',numbers:[34100,3300,2200,2200,2200,0,550,1000,0,8800,2400,16800,0,75,11,175]},
+    {id:'public',name:'基準｜全程大眾運輸',time:'7–9.5 小時',mid:8.25,drive:'0 小時',transfer:'3–6 次',comfort:'免開車，巴士空位、行李規格和轉乘最重要',route:'上野／東京站 → Outlet／CLAD → 河口湖巴士（營運時） → 東京站／上野；或直接由 Outlet 返東京',basis:'以有河口湖停留、附區域巴士的版本估算，若縮短為御殿場往返，時間與金額均低於此基準。道路停駛時查鐵路。',numbers:[0,0,0,0,0,0,0,0,0,0,2400,26600,0,0,0,0]}
   ];
   const cars=[
     {name:'中型 SUV',models:'RAV4、Corolla Cross、X-Trail 或同級',price:'試算基礎 ¥15,000–25,000／24h',choice:'四位成人加四個小過夜袋可先評估。大購物袋多時要確認後廂與後窗視野。',note:'車較短、停車較易；估算油耗 12–16 km/L。查 2WD／4WD、雪胎、倒車影像和防撞配備。'},
@@ -60,6 +69,7 @@ window.TRANSPORT = (() => {
     {name:'Toyota 富士河口湖店',ja:'トヨタレンタカー 富士河口湖店',area:'河口湖',anchor:'河口湖站',url:src.toyotaKawa,detail:'船津4657，河口湖站步行約 7 分，旁有 ENEOS。常態 08:00–20:00，官網列可洽跨縣異地還車，需核對車型與日期。'},
     {name:'Toyota 上野站前店',ja:'トヨタレンタカー 上野駅前店',area:'東京',anchor:'入谷站／上野站',url:src.toyotaUenoExact,detail:'東上野3-19-10，常態 08:00–20:00。由上野站步行短程，飯店可搭日比谷線一站再走或搭計程車，車級與雪胎待查。'},
     {name:'Nippon Rent-A-Car 御殿場站',ja:'ニッポンレンタカー 御殿場駅前',area:'御殿場',anchor:'御殿場站',url:src.nipponGotemba,detail:'官方門市；比對同站／跨區還車、營業時間及冬胎。'},
+    {name:'Nippon Rent-A-Car 上野站前',ja:'ニッポンレンタカー 上野駅前',area:'東京',anchor:'上野站',url:src.nipponUeno,detail:'兩天方案取還車門市，也是一天方案的還車門市。通常 08:00–20:00；先核對取還車手續及指定日期營業時間。'},
     {name:'Nippon Rent-A-Car 富士山・河口湖',ja:'ニッポンレンタカー 河口湖',area:'河口湖',anchor:'河口湖站',url:src.nipponKawa,detail:'使用河口湖官方區域查詢，確認接受異地還車的指定門市。'},
     {name:'Times Car Rental',ja:'タイムズカーレンタル',area:'各地查詢',anchor:'上野／東京／富士山',url:src.times,detail:'官方全國入口，區域指定門市及雪胎待核實。'},
     {name:'Nissan Rent a Car',ja:'日産レンタカー',area:'各地查詢',anchor:'上野／東京／富士山',url:src.nissan,detail:'可比對 Serena／X-Trail 級距，門市、異地還車與雪胎待核實。'},
@@ -95,5 +105,5 @@ window.TRANSPORT = (() => {
     ['備案及日照','約 17:00 前後天色轉暗，按地點查日落。降雪、結冰、封路或駕駛條件不足，改 Plan B。'],
     ['加油與事故','行經御殿場或河口湖市區提早確認加油站營業及油種，休息站適度停留。事故先確保人身安全，急救 119、警察 110，再通知門市。']
   ];
-  return {zones,fields,plans,cars,shops,airport,parking,roadChecks};
+  return {zones,fields,plans,outletBus,cars,shops,airport,parking,roadChecks};
 })();

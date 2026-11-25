@@ -8,7 +8,7 @@ const read = (name, encoding = 'utf8') => readFile(new URL('../' + name, import.
 const window = {};
 for (const name of ['data.js','transport.js']) runInNewContext(await read(name), { window });
 const { days, tasks, members } = window.TRIP;
-const { airport, plans, fields } = window.TRANSPORT;
+const { airport, plans, fields, outletBus } = window.TRANSPORT;
 const time = (date,e) => Date.parse(date+'T'+e.time+':00'+(e.zone==='TST'?'+08:00':'+09:00'));
 const embeddedRelease = html => JSON.parse(html.match(/<script id="trip-release" type="application\/json">(.*?)<\/script>/)?.[1] ?? 'null');
 
@@ -41,6 +41,18 @@ test('every rental plan matches the complete cost model', () => {
     assert.ok(p.numbers.every(Number.isFinite));
     assert.ok(p.numbers.every(n=>n>=0));
   }
+});
+test('the Nippon quotes account separately for the two-day toll and one-day Outlet bus', () => {
+  const input = id=>Object.fromEntries(fields.map(([key],i)=>[key,plans.find(p=>p.id===id).numbers[i]]));
+  const twoDay = input('a');
+  const oneDay = input('d');
+  assert.equal(twoDay.base,37180);
+  assert.equal(twoDay.toll,3600);
+  assert.equal(twoDay.base+twoDay.toll,40780);
+  assert.equal(oneDay.base,26510);
+  assert.equal(oneDay.bus,8000);
+  assert.equal(oneDay.toll,0);
+  assert.deepEqual(Array.from(outletBus.weekday,fare=>oneDay.base+fare*members.length),[34110,34510]);
 });
 test('the offline deliverable contains inline code and photos', async () => {
   const html=await read('Tokyo-Family-Trip-2027-offline.html');

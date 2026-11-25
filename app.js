@@ -35,8 +35,8 @@
     }
   } catch { canStore=false; }
   let toastTimer;
-  let model = Object.fromEntries(T.fields.map(([key],i)=>[key,T.plans[2].numbers[i]]));
-  let modelPlan = 'b24';
+  let modelPlan = 'd';
+  let model = planInput(T.plans.find(p=>p.id===modelPlan));
 
   const me=()=>memory.profiles[memory.profile];
   const save=()=>{
@@ -179,7 +179,7 @@
     let extra='';
     if(day.id===1) extra=internal('transport/airport','到飯店的交通')+' '+internal('transport/stay','入谷飯店');
     if(day.id===2) extra=internal('shopping','銀座店鋪')+' '+internal('dining','找午餐與晚餐')+links([[routeLink(D.places.hotel.en,'Ginza Station','transit'),'入谷至銀座'],[routeLink('HANDS Ginza','Shiseido Parlour','walking','MUJI Ginza|Matsuya Ginza|Ginza Mitsukoshi|GINZA SIX'),'銀座北至南步行路線'],[map('歌舞伎座 東銀座'),'附近文化景點：歌舞伎座']]);
-    if(day.id===3||day.id===4) extra=internal('transport/rental','取還車與費用試算')+' '+internal('transport/roads','停車與道路')+' '+internal('transport/fuji','大眾運輸備案')+links([[day.id===3?S.outletMap:routeLink('HOTEL CLAD','Oishi Park','driving','Kitaguchi Hongu Fuji Sengen Jinja'),'路線與動線'],[map('ENEOS 御殿場駅'),'御殿場加油站'],[map('ENEOS 河口湖駅'),'河口湖加油站']]);
+    if(day.id===3||day.id===4) extra=internal('transport/rental','取還車與費用試算')+' '+internal('transport/roads','停車與道路')+' '+internal('transport/fuji',day.id===3?'上野／東京站直達 Outlet':'大眾運輸備案')+links([[day.id===3?S.outletMap:routeLink('HOTEL CLAD','Oishi Park','driving','Kitaguchi Hongu Fuji Sengen Jinja'),'路線與動線'],[map('ENEOS 御殿場駅'),'御殿場加油站'],[map('ENEOS 河口湖駅'),'河口湖加油站']]);
     if(day.id===5) extra=internal('transport/airport','包車與大眾運輸比較')+links([[S.nrtShop,'成田 T1 餐飲與伴手禮']]);
     return tabs('itinerary',D.days.map(d=>[d.id,'DAY '+d.id+'｜'+d.label]),day.id)+
       '<section class="photo-cover">'+photo(day.photo,true)+'<p class="eyebrow">DAY '+day.id+' · '+day.label+'</p><h1>'+esc(day.title)+'</h1><p>'+esc(day.summary)+'</p></section>'+
@@ -243,11 +243,10 @@
   }
   const routes=[
     ['飯店 ↔ 銀座','日比谷線入谷 H19 至銀座 H09。出站往二丁目先逛北段，晚餐後可從銀座或東銀座回去。',S.ginza,routeLink(D.places.hotel.en,'Ginza Station')],
-    ['新宿 ↔ 御殿場','直接搭高速巴士至 Outlet 或御殿場站，先核對同班次停靠點。留意座位預約與行李條件。站至 Outlet 有免費接駁。',S.outletAccess,routeLink('Busta Shinjuku','Gotemba Premium Outlets')],
-    ['鐵路前往御殿場','可查小田急富士山號到御殿場，班次有限；或經國府津轉 JR 御殿場線，預留跨公司候車與車票確認。',S.romance,routeLink('Shinjuku Station','Gotemba Station')],
+    ['鐵路備案｜東京站 → 御殿場 Premium Outlets','東京站搭 JR 東海道線至國府津，轉 JR 御殿場線至御殿場站，再從箱根乙女口搭 Outlet 免費接駁。班次較疏時預留轉乘時間。',S.outletAccess,routeLink('Tokyo Station','Gotemba Premium Outlets','transit','Gotemba Station')],
     ['Outlet ↔ HOTEL CLAD','從 HILL SIDE 依官方指標上樓到飯店、溫泉方向。大件行李確認可用電梯與飯店接駁上車點。',S.cladAccess,routeLink('Gotemba Premium Outlets Hill Side','HOTEL CLAD','walking')],
     ['御殿場 ↔ 河口湖','先核對 Outlet 至河口湖直達巴士的運行日、是否要預約、行李規定。遇停駛改御殿場直接返東京。',S.fujiBus,routeLink('Gotemba Premium Outlets','Kawaguchiko Station')],
-    ['河口湖 ↔ 東京','查直達新宿・東京高速巴士或 JR 富士回遊。配合還車安排空位，搭車前留轉乘時間。',S.fujiReturn,routeLink('Kawaguchiko Station','Busta Shinjuku')]
+    ['河口湖 ↔ 東京','查河口湖至東京站／上野的富士急高速巴士。配合還車時間預約座位，搭車前留轉乘時間。',S.fujiReturn,routeLink('Kawaguchiko Station','Tokyo Station')]
   ];
   const transportTabs=[['flights','航班'],['airport','成田往返'],['fuji','市區・富士山'],['rental','租車自駕'],['roads','停車及道路'],['stay','兩間飯店']];
   function flights() {
@@ -273,8 +272,22 @@
       '<p class="record-meta">'+esc(fxBrief())+'。交通成本為目前票價及估算，1/28 私人包車來自使用者，無去程報價。</p>'+links([[S.nrtShop,'T1 餐飲、免稅與伴手禮'],[S.skyliner,'Skyliner 時刻'],[S.accessFare,'Access Express 票價']]);
   }
   function fujiTransport() {
-    return '<div class="grid two">'+routes.map(([title,detail,source,directions])=>card(title,detail,links([[source,'官網'],[directions,'Google Maps']]))).join('')+'</div>'+
-      links([[S.busBook,'高速巴士預約'],[S.odakyu,'小田急高速巴士'],[S.jr,'JR 東日本'],[S.fujiTrain,'富士回遊'],[S.circleBus,'河口湖周遊巴士']]);
+    const weekday=T.outletBus.weekday.map(jpy).join('–');
+    const special=T.outletBus.special.map(jpy).join('–');
+    const fare='平日成人單程 '+weekday+'；週末、假日或指定日 '+special+'。';
+    const ueno=card('上野站入谷口 → 御殿場 Premium Outlets',
+      '離飯店較近。可步行到 JR 上野站入谷口，或搭日比谷線一站至上野後再走到乘車點。Outlet 公布班次為 09:55 發車、12:10 抵達。',
+      '<p>'+fare+' 入谷到上野如搭地鐵，普通票另加 '+jpy(T.outletBus.uenoMetroPaper)+'／人。</p>'+
+      links([[S.outletUenoBus,'上野直達班次與票價'],[S.uenoBusStop,'JR 上野乘車點'],[routeLink(D.places.hotel.en,'JR 上野駅 入谷口 高速バスのりば','walking'),'飯店步行路線']]));
+    const tokyo=card('東京站八重洲南口 → 御殿場 Premium Outlets',
+      '從入谷搭地鐵到上野，轉 JR 到東京站，出站後往八重洲南口的 JR 高速巴士總站。班次較多，Outlet 公布的平日例為 09:00→10:40 或 09:30→11:10。',
+      '<p>'+fare+' 入谷到東京站的市區電車費另計。部分回程在東京站日本橋口下車。</p>'+
+      links([[S.outletTokyoBus,'東京站直達班次與票價'],[S.tokyoBusStop,'JR 東京車站乘車點'],[routeLink(D.places.hotel.en,'東京駅 JR高速バスターミナル 八重洲南口'),'飯店到乘車點']]));
+    return section('1/26 前往御殿場 Premium Outlets','<div class="grid two">'+ueno+tokyo+'</div>'+
+      '<p class="record-meta">兩條路線均在 Outlet 園區下車。上野較近，想在中午前到 Outlet 可先查東京站較早班次。班表是目前公布的參考，2027/1/26 班次、票價與座位請在開賣後確認。</p>'+
+      links([[S.outletBusBooking,'高速巴士網訂位'],[S.outletBusGuide,'JR 巴士購票說明'],[S.metroFare,'東京 Metro 票價']]))+
+      section('其他市區與富士山交通','<div class="grid two">'+routes.map(([title,detail,source,directions])=>card(title,detail,links([[source,'官網'],[directions,'Google Maps']]))).join('')+'</div>'+
+      links([[S.jr,'JR 東日本'],[S.fujiReturn,'富士急巴士'],[S.circleBus,'河口湖周遊巴士']]));
   }
   function stay() {
     const h=D.places.hotel;
@@ -296,21 +309,29 @@
     const total=T.fields.slice(0,13).reduce((sum,[key])=>sum+input[key],gas);
     return {gas,total};
   };
-  const planInput=p=>Object.fromEntries(T.fields.map(([key],i)=>[key,p.numbers[i]]));
+  function planInput(plan) {
+    return Object.fromEntries(T.fields.map(([key],i)=>[key,plan.numbers[i]]));
+  }
   function rental() {
     const baseline=T.plans.at(-1);
     const plans=T.plans.map(p=>{
-      const {total}=modelSum(planInput(p));
+      const input=planInput(p);
+      const {total}=modelSum(input);
+      const amounts=p.id==='d'?T.outletBus.weekday.map(fare=>input.base+fare*D.members.length):[total,total];
       const diff=baseline.mid-p.mid;
       const compare=diff===0?'基準':(diff>0?'中位估快 ':'中位估慢 ')+Math.abs(diff)+' 小時';
-      return '<article class="card"><h3>'+esc(p.name)+'</h3>'+chips(badge('Estimated'),p.id==='b24'?chip('優先查詢','easy'):p.id==='c'?chip('次選'):'')+
+      const breakdown=p.id==='d'?'含稅租金 '+jpy(input.base)+' ＋ 上野直達巴士 '+T.outletBus.weekday.map(fare=>jpy(fare*D.members.length)).join('–')+'（四人）。以入谷飯店步行到上野入谷口計。若搭地鐵到上野，再加 '+jpy(T.outletBus.uenoMetroPaper*D.members.length)+'／四人。':
+        '含稅租金 '+jpy(input.base)+' ＋ 高速費 '+jpy(input.toll)+'。';
+      return '<article class="card"><h3>'+esc(p.name)+'</h3>'+chips(p.quote?chip('使用者提供報價','easy'):badge('Estimated'))+
         '<p class="route">'+esc(p.route)+'</p><p>'+esc(p.basis)+'</p><p class="small">'+esc('總交通 '+p.time+' · 駕駛 '+p.drive+' · 轉乘 '+p.transfer+' · '+compare)+'</p><p class="small">'+esc(p.comfort)+'</p>'+
-        '<p><strong>'+jpy(total)+' · '+twd(total*fx.value.rate)+'</strong>／四人</p><p class="small">'+jpy(total/4)+' · '+twd(total*fx.value.rate/4)+'／人</p>'+
+        (p.quote?'<p class="small">'+esc(breakdown)+'</p>':'')+
+        '<p><strong>'+range(amounts)+'</strong>／四人'+(p.quote?'已列費用小計':'')+'</p><p class="small">'+range(amounts,4)+'／人</p>'+
         '<div class="tools-row"><button type="button" class="btn" data-action="use-plan" data-value="'+p.id+'">帶入試算</button></div></article>';
     }).join('');
-    return '<article class="alert"><h3>先看雪胎與駕駛條件，再決定取還車方式</h3><p>首選先查 Toyota 御殿場站 1/27 當天取還的七至八人座 MPV，可保留首日 Outlet 時間並減少租期。次選御殿場取、富士河口湖還，縮短折返但先確認跨縣、雪胎和車級。若冬季條件不符，採大眾運輸。兩日價格與庫存均尚未核實。</p></article>'+
-      section('兩日交通比較','<div class="grid">'+plans+'</div><p class="record-meta">2026-11-25 規劃估算。金額採各方案距離、車輛與配套交通的假設。時間為兩日移動合計，含部分候車／取還流程，排除遊覽，各項可用下方模型覆核。'+esc(fxBrief())+'。</p>'+
-        links([[S.toyotaRate,'Toyota 計價參考'],[S.toyotaOptions,'租車設備選項'],[S.toyotaOneWay,'異地還車'],[S.toll,'高速公路過路費'],[S.outletAccess,'巴士營運與接駁'],[S.fujiReturn,'富士急巴士']]))+
+    return '<article class="alert"><h3>Nippon Rent-A-Car 同車級報價</h3><p>兩張截圖均為 Intermediate Plus、車款未指定、雪胎、禁菸、標準方案，均未加購 CDW 或 ECO。報價含稅，油費、停車及未列費用需另估。截圖顯示 ETC 卡租用選項為 ¥330，請在確認頁核對是否已計入。冬季路況不適合自駕時，可改搭大眾運輸。</p>'+
+      '<div class="tools-row">'+internal('transport/fuji','看上野／東京站直達巴士')+'</div></article>'+
+      section('兩日交通比較','<div class="grid">'+plans+'</div><p class="record-meta">A、D 租金來源為使用者提供的報價截圖。D 的上野巴士依目前公開平日單程票價估算，實際以訂位畫面為準。其他方案的金額及所有交通時間均為規劃估算。'+esc(fxBrief())+'。</p>'+
+        links([[S.nippon,'Nippon 租車官網'],[S.nipponUeno,'Nippon 上野站前'],[S.nipponGotemba,'Nippon 御殿場站'],[S.toll,'高速過路費查詢'],[S.outletBusBooking,'巴士訂位']]))+
       section('四人租車成本試算','<article class="panel" id="rental-calculator">'+rentCalculator()+'</article>')+
       section('車型比較','<div class="grid">'+T.cars.map(c=>card(c.name,c.models,'<p>'+esc(c.choice)+'</p><p>'+esc(c.note)+'</p><p class="small muted">'+esc(c.price)+'</p>')).join('')+
         '</div><p class="record-meta">租車訂單多按級距，同級替代車、動力及輔助功能須以訂單與門市答覆為準。估算油耗受車款、道路與天氣影響。</p>')+
@@ -319,7 +340,9 @@
       links([[S.toyotaCancel,'Toyota 預約與取消'],[S.toyotaBookingFAQ,'Toyota 預約窗口'],[S.nippon,'Nippon 官方預約'],[S.toyotaGotemba,'Toyota 御殿場門市']])+'</article>');
   }
   function rentCalculator() {
-    return '<p class="muted">同一項費用已含在基本租金時，額外欄位請填 0。各欄為四人的費用。油費＝公里數 ÷ 每公升行駛公里 × 每公升油價。</p>'+
+    return '<p class="muted">已包含在租車報價的費用，請勿重複加計。各金額欄為四人總費用。油費＝公里數 ÷ 每公升行駛公里 × 每公升油價。</p>'+
+      (modelPlan==='d'?'<p class="small">預填上野單程巴士預算，每人 '+jpy(T.outletBus.weekday[1])+'。若改走東京站或搭地鐵到上野，請補上市區車資。尚未提供的高速、油費等欄位先留 0。</p>':
+        modelPlan==='a'?'<p class="small">預填租金及兩天高速費，尚未提供的油費等欄位先留 0。</p>':'')+
       '<div class="tools-row"><label>載入方案 <select id="rental-plan">'+T.plans.map(p=>'<option value="'+p.id+'" '+(modelPlan===p.id?'selected':'')+'>'+esc(p.name)+'</option>').join('')+'</select></label></div>'+
       '<div class="form-grid section">'+T.fields.map(([key,label,unit])=>'<label>'+esc(label)+' <span class="muted">'+unit+'</span><input type="number" min="0" max="99999999" step="any" inputmode="decimal" data-rental="'+key+'" value="'+model[key]+'"></label>').join('')+'</div>'+
       '<div id="rental-result" class="result" aria-live="polite">'+rentResult()+'</div>';
