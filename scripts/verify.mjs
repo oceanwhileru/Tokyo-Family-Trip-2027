@@ -26,7 +26,8 @@ test('the Taiwan reminder and Japan return quote have separate records', () => {
   assert.equal(members.length,4);
   assert.equal(tasks.length,12);
   assert.equal(tasks[0].due,'2026/12/01 10:00 TST');
-  assert.equal(airport.in[2].cost,null);
+  assert.equal(airport.in[2].cost[0],29000);
+  assert.equal(airport.in[3].cost,null);
   assert.equal(airport.out[0].cost[0],16000);
 });
 test('every rental plan matches the complete cost model', () => {

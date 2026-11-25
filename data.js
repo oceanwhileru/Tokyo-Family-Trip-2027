@@ -48,12 +48,12 @@ window.TRIP = (() => {
     toyotaKawa:'https://rent.toyota.co.jp/eng/reservation/index01.aspx?keyword=Kawaguchiko+Station&shopMode=0',
     toyotaUeno:'https://rent.toyota.co.jp/eng/reservation/index01.aspx?keyword=Ueno&shopMode=0',
     toyotaOneWay:'https://rent.toyota.co.jp/eng/service/oneway.html',
-    nippon:'https://www.nipponrentacar.co.jp/en/',
+    nippon:'https://www.nipponrentacar.co.jp/en/nrglobal/',
     nipponKawa:'https://www.nipponrentacar.co.jp/shop/area/yamanashi/kawaguchiko.html',
     times:'https://www.timescar-rental.com/en/',
     nissan:'https://nissan-rentacar.com/en/',
     orix:'https://car.orix.co.jp/eng/',
-    npa:'https://www.npa.go.jp/policies/application/license_renewal/pdf/Taiwan.pdf',
+    npa:'https://www.npa.go.jp/policies/application/license_renewal/have_DL_issed_another_country.html',
     jaf:'https://english.jaf.or.jp/driving-in-japan/drive-in-japan/switch-to-japanese-license',
     thb:'https://www.thb.gov.tw/cp.aspx?n=251',
     jartic:'https://www.jartic.or.jp/',
@@ -73,7 +73,7 @@ window.TRIP = (() => {
     shrine:'https://sengenjinja.jp/',
     arakura:'https://fujiyoshida.net/spot/12',
     jnto:'https://www.japan.travel/tw/',
-    visit:'https://www.vjw.digital.go.jp/'
+    visit:'https://services.digital.go.jp/visit-japan-web/'
   };
   const hotelName='Vessel Inn Ueno Iriya Ekimae';
   const places={
@@ -109,7 +109,7 @@ window.TRIP = (() => {
     ]},
     {id:3,date:'2027-01-26',label:'1/26（二）',area:'御殿場',title:'御殿場 Premium Outlets・HOTEL CLAD',summary:'Outlet 至少留五小時，傍晚入住後吃飯、泡湯。',photo:'gotemba',walk:'約 45–80 分鐘・中，可分段坐下休息',meet:'16:20 HILL SIDE 食堂入口；如分頭行動，先約定下一次集合',rest:'HILL SIDE 的 ITADAKI TERRACE 與咖啡店',backup:'搭營運中高速巴士。遇大雪查飯店、巴士及接駁公告，延誤時優先保障入住和晚餐。',events:[
       event('08:30','從入谷出發','比一般日早出門，以保留五小時 Outlet 時段。優先查新宿直達 Outlet 或御殿場站接駁，班次依實際預約。','Busta Shinjuku','main','依路線','約 2–3 小時'),
-      event('11:15','抵達御殿場・處理過夜行李','先問 HOTEL CLAD 能否寄存；若當天取車，預留 30–45 分確認文件、雪胎、保險與車況。最晚可調整晚餐承接五小時購物窗口。','HOTEL CLAD','main','','30–45 分'),
+      event('11:15','抵達御殿場・處理過夜行李','先問 HOTEL CLAD 能否寄存。若 1/26 取車，預留 30–45 分辦手續及查雪胎與車況，優先提早抵達門市；若 11:30 後才開始購物，並按飯店晚餐可入場時段順延購物結束。','HOTEL CLAD','main','','30–45 分'),
       event('11:30','Outlet 自由購物、午餐、下午茶','11:30–16:30 為五小時規劃窗口。分頭逛 WEST／EAST／HILL SIDE，午餐和休息可在 ITADAKI TERRACE。','Gotemba Premium Outlets','main','依個人採買','300 分'),
       event('16:30','入住 HOTEL CLAD','由 HILL SIDE 往飯店，攜大件行李依官方動線，住客車輛移至飯店專用停車場。','HOTEL CLAD'),
       event('18:00','晚餐・木之花之湯','按訂房方案確認餐次。飯後自由泡湯及休息，飲酒後不開車。','Konohana no Yu','main','依住宿方案','約 2–3 小時')
@@ -156,12 +156,13 @@ window.TRIP = (() => {
   const venue = (id,region,cn,ja,en,address,official,category,hours,features={}) =>
     ({id,region:regions[region],cn,ja,en,address,official,category,hours,closed:'休業日與指定日期請看官網',checked,validity:'官網一般資訊；2027 指定日須複核',status:'Confirmed',booking:'不適用',...features});
   const dining=[
+    venue('jojoen',1,'敘敘苑 銀座みゆき通店','叙々苑 銀座みゆき通り店','Jojoen Ginza Miyuki-dori','東京都中央区銀座6-8-3 10F','https://www.jojoen.co.jp/shop/jojoen/miyukidori/','燒肉','以店舖與訂位頁公告為準',{reserve:'建議',four:true,price:3,tags:'和牛 yakiniku wagyu 焼肉',note:'四人的和牛燒肉選項，距銀座站 A2 口約兩分鐘。'}),
     venue('victoria',0,'Grill Victoria','グリルビクトリヤ','Grill Victoria','東京都台東区根岸3-12-18','https://www.grill-victoria.com/','日式定食','午、晚餐分時段',{reserve:'建議',four:true,price:2,note:'洋食及生薑豬肉，晚到先問四人桌與最後點餐。'}),
     venue('vesselbreak',0,'Vessel Inn 早餐','ベッセルイン上野入谷駅前 朝食','Vessel Inn Breakfast','東京都台東区入谷1-25-6',src.hotelBreakfast,'日式定食','一般 06:00–09:30',{reserve:'詢問',four:true,price:2,note:'住宿未含早餐，現場能否加購及費用依飯店。'}),
-    venue('iriyacafe',0,'入谷 Plus Café','イリヤプラスカフェ','Iriya Plus Café','東京都台東区下谷2-9-10','https://www.imadoworks.com/iriyaplus/','咖啡廳','按店公告',{reserve:'詢問',four:true,price:1,note:'古民家咖啡，確認店休與甜點售完時間。'}),
+    venue('iriyacafe',0,'入谷 Plus Café','イリヤプラスカフェ','Iriya Plus Café','東京都台東区下谷2-9-10','https://www.iriyapluscafe.jp/','咖啡廳','按店公告',{reserve:'詢問',four:true,price:1,note:'古民家咖啡，確認店休與甜點售完時間。'}),
     venue('imahan',1,'人形町今半 銀座店','人形町今半 銀座店','Ningyocho Imahan Ginza','東京都中央区銀座6-8-7 5F','https://restaurant.imahan.com/ginza/','壽喜燒','11:30–15:00／17:00–22:00',{reserve:'建議',four:true,price:3,tags:'和牛 wagyu sukiyaki しゃぶしゃぶ',note:'和牛壽喜燒與涮涮鍋，四人先預約。'}),
     venue('shiseido',1,'資生堂 Parlour 銀座','資生堂パーラー 銀座本店','Shiseido Parlour Ginza','東京都中央区銀座8-8-3','https://parlour.shiseido.co.jp/en/shoplist/restaurantginza/','甜點','依沙龍及樓層',{reserve:'詢問',four:true,price:2,tags:'下午茶 咖啡廳 parfait dessert cafe',note:'餐廳與甜點沙龍為不同樓層，可在八丁目坐下休息。'}),
-    venue('kagari',1,'銀座篝 本店','銀座 篝 本店','Ginza Kagari','東京都中央区銀座6-4-12','https://www.ginza.jp/shop/9039','拉麵','依業者公告',{status:'Pending',reserve:'免預約',four:false,price:2,tags:'ramen 鶏白湯',note:'店鋪直連與營業待複核，四人可能需分開坐。'}),
+    venue('kagari',1,'銀座篝 本店','銀座 篝 本店','Ginza Kagari','東京都中央区銀座6-4-12','https://www.ginza.jp/en/shopcategory/gourmet-japanese','拉麵','依業者公告',{status:'Pending',reserve:'免預約',four:false,price:2,tags:'ramen 鶏白湯',note:'店鋪直連、營業與排隊待複核；連結為銀座官方地區餐廳目錄。四人可能需分開坐。'}),
     venue('ginzasushi',1,'銀座壽司幸本店','銀座寿司幸本店','Ginza Sushiko Honten','東京都中央区銀座6-3-8','https://ginza-sushikou-honten.com/en','壽司','依官方訂位',{reserve:'建議',four:true,price:3,tags:'sushi 鮨'}),
     venue('nodaiwa',1,'銀座野田岩','銀座 野田岩','Ginza Nodaiwa','東京都中央区銀座4-2-15 B1F','https://www.nodaiwa.com/','鰻魚','依銀座店公告',{reserve:'詢問',four:true,price:3,tags:'unagi うなぎ'}),
     venue('musashi',1,'武藏野森珈琲','むさしの森珈琲 マロニエゲート銀座2','Musashino Mori Coffee','東京都中央区銀座3-2-1','https://www.marronniergate.jp/info','咖啡廳','一般 09:00–23:00',{reserve:'詢問',four:true,price:2,tags:'早午餐 pancakes brunch 下午茶'}),

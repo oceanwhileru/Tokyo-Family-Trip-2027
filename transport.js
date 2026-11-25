@@ -3,6 +3,10 @@ window.TRANSPORT = (() => {
   const {src,venue}=window.TRIP;
   const cladPlan=id=>'https://go-odakyu-resorts.reservation.jp/ja/hotels/gotemba-hotelclad/plans/'+id+'?room_id=10016850&checkin_date=20270126&checkout_date=20270127&adults=2&rooms=2&dateUndecidedFlg=0';
   Object.assign(src,{
+    toyotaOneWay:'https://rent.toyota.co.jp/eng/service/oneway/simulation.aspx',
+    toyotaBookingFAQ:'https://www.rent.toyota.co.jp/global_eng/faq/',
+    toyotaUenoExact:'https://rent.toyota.co.jp/shop/detail.aspx?eCode=002&rCode=63601',
+    jpTwDriving:'https://www.koryu.or.jp/consul/drivers/detail3/',
     peachLookup:'https://www.flypeach.com/book/schedules/tw/',
     peachGroup:'https://www.anahd.co.jp/group/en/pr/202608/20260818.html',
     cladBook:'https://go-odakyu-resorts.reservation.jp/ja/hotels/gotemba-hotelclad/searchInput',
@@ -54,7 +58,7 @@ window.TRANSPORT = (() => {
   const shops=[
     {name:'Toyota 御殿場站前店',ja:'トヨタレンタカー 御殿場駅前店',area:'御殿場',anchor:'御殿場站',url:src.toyotaGotemba,detail:'新橋1850-6，御殿場站約 60 m。一般 09:00–19:00，列縣內及跨縣異地還車可詢。指定日、雪胎和車級待查。'},
     {name:'Toyota 富士河口湖店',ja:'トヨタレンタカー 富士河口湖店',area:'河口湖',anchor:'河口湖站',url:src.toyotaKawa,detail:'船津4657，河口湖站步行約 7 分，旁有 ENEOS。常態 08:00–20:00，官網列可洽跨縣異地還車，需核對車型與日期。'},
-    {name:'Toyota 上野站／東京站門市',ja:'トヨタレンタカー 上野駅前',area:'東京',anchor:'入谷站／上野站',url:src.toyotaUeno,detail:'用門市搜尋確認相對飯店位置、取還車窗口、車級與雪胎；可自上野前往。'},
+    {name:'Toyota 上野站前店',ja:'トヨタレンタカー 上野駅前店',area:'東京',anchor:'入谷站／上野站',url:src.toyotaUenoExact,detail:'東上野3-19-10，常態 08:00–20:00。由上野站步行短程，飯店可搭日比谷線一站再走或搭計程車，車級與雪胎待查。'},
     {name:'Nippon Rent-A-Car 御殿場站',ja:'ニッポンレンタカー 御殿場駅前',area:'御殿場',anchor:'御殿場站',url:src.nipponGotemba,detail:'官方門市；比對同站／跨區還車、營業時間及冬胎。'},
     {name:'Nippon Rent-A-Car 富士山・河口湖',ja:'ニッポンレンタカー 河口湖',area:'河口湖',anchor:'河口湖站',url:src.nipponKawa,detail:'使用河口湖官方區域查詢，確認接受異地還車的指定門市。'},
     {name:'Times Car Rental',ja:'タイムズカーレンタル',area:'各地查詢',anchor:'上野／東京／富士山',url:src.times,detail:'官方全國入口，區域指定門市及雪胎待核實。'},
@@ -65,7 +69,8 @@ window.TRANSPORT = (() => {
     in:[
       {name:'Skyliner 經京成上野',cost:[10320,12320],min:'80–115 分',changes:'1 次／步行約 8–15 分',comfort:'全車指定席，抵上野後接計程車搬運較少。',schedule:'領行李後買票，抵達飯店目標 17:55，保留三小時。',detail:'¥2,580 × 4，另計市區末段交通；加至 ¥12,320 是規劃值。',url:src.skyFare},
       {name:'京成本線特急或 Access Express',cost:[5200,7200],min:'105–145 分',changes:'1–2 次／步行約 12–25 分',comfort:'可走京成上野或按運行方向規劃，無指定席時大件行李較辛苦。',schedule:'核對直達與轉乘；若遇候車延誤，飯店與用餐順延。',detail:'京成票、Metro 或短程交通合計估算。',url:src.mainFare},
-      {name:'合法計程車／去程接送',cost:null,min:'75–120+ 分',changes:'0 次／步行少',comfort:'行李多時可問大型車，行李、過路費及延誤等候需確認。',schedule:'領行李後赴官方乘車點或與合法業者約接客。',detail:'無去程包車報價。依成田 T1 正式排班、區域價格或另詢合法業者。',url:src.nrtTaxi}
+      {name:'成田機場排班計程車',cost:[29000,31000],min:'75–120+ 分',changes:'0 次／步行少',comfort:'行李多時可問大型車，行李、過路費及延誤等候需確認。',schedule:'領行李後赴官方乘車點或與合法業者約接客。',detail:'成田官方台東區定額 ¥29,000–31,000，依道路，過路費與特殊加價須問司機。去程私人包車另詢價。',url:src.nrtTaxi},
+      {name:'去程私人接送',cost:null,min:'75–120+ 分',changes:'0 次／步行少',comfort:'適合行李多，須按箱數確認車型、牌照與保險。',schedule:'預約時提供航班，詢問誤點等待及 T1 集合點。',detail:'1/24 私人接送尚無報價。約車前詢價並核對全包、超時與取消。',url:src.nrtTaxi}
     ],
     out:[
       {name:'A｜私人包車',cost:[16000,16000],min:'75–115+ 分',changes:'0 次／步行約 3–8 分',comfort:'四人直達，購物袋便利，容量依車型；留意塞車。',schedule:'建議 10:55–11:15 發車，正常估 12:10–13:10 到 T1。',detail:'使用者報價。業者、營業資格、保險、行李、等待、超時、過路費、取消及 T1 送達待確認。',url:src.nrtTaxi},

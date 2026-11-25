@@ -230,7 +230,7 @@
       '<div class="tools-row"><label><span class="sr-only">地區</span><select id="near-region">'+options(D.regions,'上野／入谷')+'</select></label>'+button('near-manual','在地圖搜尋')+button('locate','使用我的位置')+'</div><p id="geo-message" class="record-meta" aria-live="polite"></p></article>';
     const buying='<div class="grid two">'+card('御殿場品牌與動線','冬季一般 10:00–19:00，當日與個店另查。從 WEST、EAST 或 HILL SIDE 挑想逛的店，到 ITADAKI TERRACE 集合。'+
       '園區提供接駁及停車資訊。',links([[S.outletMap,'官方園區圖'],[S.outletPDF,'下載園區圖'],[S.outletName,'官方品牌目錄'],[S.outletAccess,'接駁與停車']]))+
-      card('日本退稅新制','2026/11/1 起採先付含稅價。符合資格者同一店同日合計未稅滿 ¥5,000，出境在購買後 90 天內出示護照並完成海關查驗，再由業者退款。需要查驗的物品請先留在身邊，詳看機場及店家流程。',links([[S.tax,'國稅廳旅客說明'],[S.taxDetail,'退稅制度細節'],[S.nrtShop,'機場伴手禮']]))+'</div>';
+      card('日本退稅新制','2026/11/1 起採先付含稅價。符合資格者同一店同日合計未稅滿 ¥5,000，出境在購買後 90 天內出示護照並完成海關查驗，再由業者退款。退稅品若要托運，先完成海關確認再交運，並保存店家指定的退款方式。',links([[S.tax,'國稅廳旅客說明'],[S.taxDetail,'退稅制度細節'],[S.nrtShop,'機場伴手禮']]))+'</div>';
     return heading(dining?'美食探索':'購物探索',dining?'用中文、日文或英文搜尋精選餐廳。':'逛銀座、御殿場與周邊商店，收藏想去的店。')+
       (dining?nearby:buying+'<div class="tools-row">'+internal('tools/shopping','我的購物清單',true)+'</div>')+
       section(dining?'精選餐廳':'品牌與店鋪','<div class="panel"><form id="record-filters" class="filters" data-type="'+type+'">'+
@@ -271,7 +271,7 @@
     const group=(title,items,returning)=>section(title,'<div class="grid">'+items.map((v,i)=>
       '<article class="card"><h3>'+esc(v.name)+'</h3><p><b>四人 </b>'+esc(range(v.cost))+'</p><p><b>每人 </b>'+esc(range(v.cost,4))+'</p>'+
       '<p class="small">'+esc(v.min+' · '+v.changes)+'</p><p>'+esc(v.comfort)+'</p><p>'+esc(v.schedule)+'</p><p class="small muted">'+esc(v.detail)+'</p>'+
-      links([[v.url,'官方資訊'],[routeLink(returning?depart:airportMap,returning?airportMap:depart,(!returning&&i===2)||(returning&&i===0)?'driving':'transit'),'路線導航']])+'</article>').join('')+'</div>');
+      links([[v.url,'官方資訊'],[routeLink(returning?depart:airportMap,returning?airportMap:depart,(!returning&&i>=2)||(returning&&i===0)?'driving':'transit'),'路線導航']])+'</article>').join('')+'</div>');
     return '<article class="alert"><h3>1/28 返程至少保留五小時</h3><p>11:40 JST 為最晚上路時間。若訂單確認 16:35，改以 11:35 為上限；必要時再提早。規劃時間含候車與站內移動。</p></article>'+
       group('1/28｜飯店至成田',T.airport.out,true)+group('1/24｜成田至飯店',T.airport.in,false)+
       '<p class="record-meta">'+esc(fxBrief())+'。交通成本為目前票價及估算，1/28 私人包車來自使用者，無去程報價。</p>'+links([[S.nrtShop,'T1 餐飲、免稅與伴手禮'],[S.skyliner,'Skyliner 時刻'],[S.accessFare,'Access Express 票價']]);
@@ -319,8 +319,8 @@
       section('車型比較','<div class="grid">'+T.cars.map(c=>card(c.name,c.models,'<p>'+esc(c.choice)+'</p><p>'+esc(c.note)+'</p><p class="small muted">'+esc(c.price)+'</p>')).join('')+
         '</div><p class="record-meta">租車訂單多按級距，同級替代車、動力及輔助功能須以訂單與門市答覆為準。估算油耗受車款、道路與天氣影響。</p>')+
       section('租車公司與門市','<article class="panel"><label>搜尋公司、地區或門市 <input id="shop-search" type="search" value="'+esc(filter.transport.q||'')+'" placeholder="Toyota、御殿場、河口湖"></label></article><div id="shop-results">'+shopsView()+'</div>')+
-      section('預約與取消','<article class="panel"><p>儘早向首選與備選門市分別詢價。填 1/26–1/27，另試 1/27 日租。核對預設有無稅金、冬季設備、有無雪胎指定選項、付款方式及確認信。先記下取消截止與費率。Toyota 一般規則可能自取車前第 6 日起收取消費，適用條款依訂單。</p>'+
-      links([[S.toyotaCancel,'Toyota 預約與取消'],[S.nippon,'Nippon 官方預約'],[S.toyotaGotemba,'Toyota 御殿場門市']])+'</article>');
+      section('預約與取消','<article class="panel"><p>Toyota 官方說明一般最早可於取車前三個月預約，這段日期已落在一般預約窗口內。儘早向首選與備選門市詢價，並同時查 1/27 日租。核對預設有無稅金、冬季設備、有無雪胎指定選項、付款方式及確認信。先記下取消截止與費率。Toyota 一般規則可能自取車前第 6 日起收取消費，適用條款依訂單。</p>'+
+      links([[S.toyotaCancel,'Toyota 預約與取消'],[S.toyotaBookingFAQ,'Toyota 預約窗口'],[S.nippon,'Nippon 官方預約'],[S.toyotaGotemba,'Toyota 御殿場門市']])+'</article>');
   }
   function rentCalculator() {
     return '<p class="muted">同一項費用已含在基本租金時，額外欄位請填 0。各欄為四人的費用。油費＝公里數 ÷ 每公升行駛公里 × 每公升油價。</p>'+
@@ -344,7 +344,7 @@
     return '<article class="alert"><h3>路況不宜時採 Plan B</h3><p>雪胎是本次自駕必要條件。4WD 有助起步牽引，煞車及冰面仍要按路況留距。駕駛方向靠左，遇雪鏈管制須符合路段要求。App 連結官方路況，由駕駛與家人依當日公告決策。</p>'+
       links([[S.jartic,'JARTIC 路況'],[S.drive,'NEXCO 道路交通'],[S.nexco,'NEXCO 中日本'],[S.chain,'國土交通省雪鏈規定'],[S.jma,'日本氣象廳'],[S.sunset,'查日落']])+'</article>'+
       section('台灣駕照赴日文件','<article class="panel legal"><p>攜帶有效台灣駕照正本、認可的日文譯本與護照，並能證明入境日。日本一般自入境日起一年內、且原證有效期內，以較早者為限，重複入境與居留另有規則。租車門市的年齡、年資、付款卡與增列駕駛依業者。Vito 需先本人確認資格與冬季駕駛能力。</p>'+
-      links([[S.npa,'日本警察廳・台灣駕照'],[S.jaf,'JAF 認可文件'],[S.thb,'台灣公路局日文譯本']])+'</article>')+
+      links([[S.npa,'日本警察廳'],[S.jpTwDriving,'日本台灣交流協會・台灣駕照'],[S.jaf,'JAF 認可文件'],[S.thb,'台灣公路局日文譯本']])+'</article>')+
       section('出車查核','<div class="grid two">'+T.roadChecks.map(([title,detail])=>card(title,detail)).join('')+'</div>')+
       section('停車場與加油','<div class="grid two">'+T.parking.map(([title,native,address,detail,url])=>card(title,detail,'<p class="small muted">'+esc(address)+'</p>'+
         links([[url,'官方資訊'],[map(native+' '+address),'Google Maps']]))).join('')+'</div>'+
