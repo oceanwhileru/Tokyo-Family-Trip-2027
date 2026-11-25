@@ -11,10 +11,9 @@
   <meta property="og:description" content="五天行程、御殿場與富士山自駕、成田交通與旅行工具。">
   <title>Tokyo Family Trip 2027｜東京家族旅行</title>
   <link rel="icon" href="assets/icon.svg" type="image/svg+xml">
-  <link rel="stylesheet" href="styles.css">
-  <script defer src="data.js"></script>
-  <script defer src="transport.js"></script>
-  <script defer src="app.js"></script>
+  <link rel="stylesheet" href="releases/v2.0.1-9c4a6ec77341/styles.css" integrity="sha256-CmJzvjKWUgQxLxnCbzo1hHjJ5O2uCnLSilt2K+lXpbI=">
+  <script id="trip-release" type="application/json">{"version":"V2.0.1","deployedAt":"2026-11-25T13:46:42.014Z","buildId":"v2.0.1-9c4a6ec77341"}</script>
+  <script defer src="releases/v2.0.1-9c4a6ec77341/app.js" integrity="sha256-0E1tH+TSprKPIet0h/+2b27ZqtwNKi23Xyl4ktZr9zs="></script>
 </head>
 <body>
   <a class="skip" href="#content">跳至內容</a>
@@ -30,7 +29,24 @@
   </header>
   <noscript><p class="wrap panel">請開啟 JavaScript 以使用五天行程、搜尋與試算。</p></noscript>
   <main class="wrap" id="content" tabindex="-1"></main>
-  <footer class="footer wrap"><span>Tokyo Family Trip 2027</span><span>台灣 UTC+8 · 日本 UTC+9</span><a href="#sources">資料、照片與離線版</a></footer>
+  <footer class="footer wrap">
+    <span>Tokyo Family Trip 2027</span><span>台灣 UTC+8 · 日本 UTC+9</span><a href="#sources">資料、照片與離線版</a>
+    <section class="footer-version" data-version-panel aria-label="網站版本"></section>
+  </footer>
+  <template id="version-panel-template">
+    <div class="version-panel">
+      <div class="version-info">
+        <strong data-current-version></strong>
+        <span>部署更新 <time data-deployed-at></time></span>
+      </div>
+      <div class="version-actions">
+        <button class="btn" type="button" data-version-action="check">檢查最新版本</button>
+        <button class="btn" type="button" data-version-action="reload">重新載入</button>
+        <a class="btn" data-new-offline target="_blank" rel="noopener noreferrer" hidden>取得新版離線檔</a>
+      </div>
+      <p class="small muted" role="status" data-version-status></p>
+    </div>
+  </template>
   <div id="notice" role="status" class="toast" hidden></div>
 </body>
 </html>

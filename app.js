@@ -106,6 +106,7 @@
     return '<section class="hero">'+photo('fuji',true)+'<div><p class="hero-meta">2027.01.24 – 01.28 ｜ 五天四夜</p><h1><span>Tokyo Family</span><span>Trip <b class="year">2027</b></span></h1>'+
       '<p class="hero-zh">東京家族旅行</p><div class="hero-foot"><span>東京・御殿場・富士山</span><span>4 位成人</span></div></div>'+
       '<div class="countdown"><strong>'+esc(remain>0?remain:over?'完成':'DAY '+tripDay.id)+'</strong><span>'+esc(remain>0?'距出發 · 天':over?'旅程已結束':'旅途中 · JST')+'</span></div></section>'+
+      (window.TRIP_VERSION?'<section class="home-version" data-version-panel aria-label="網站版本"></section>':'')+
       section('五天行程','<div class="daystrip">'+D.days.map(d=>'<a href="#itinerary/'+d.id+'" class="day-short">'+photo(d.photo,true)+'<span class="day-num">DAY '+d.id+' · '+esc(d.label)+'</span><b>'+esc(d.area)+'</b></a>').join('')+'</div>',
         '<div class="member-row" aria-label="四位家人">'+D.members.map(n=>'<button class="member" data-action="profile" data-value="'+n+'" aria-pressed="'+(n===memory.profile)+'"><i aria-hidden="true">'+n[0]+'</i>'+n+'</button>').join('')+'</div>')+
       '<div class="dash-lower">'+section(tripDay?'今天在日本':over?'旅行回顧':'出發前','<article class="panel"><h3>'+esc(tripDay?tripDay.title:over?'回顧收藏與費用':'下一個活動')+'</h3><p>'+esc(tripDay?tripDay.summary:next)+'</p>'+
@@ -483,6 +484,7 @@
     const views={home:dashboard,itinerary:()=>agenda(tab),dining:()=>listing('dining'),shopping:()=>listing('shopping'),
       transport:()=>transport(tab),tools:()=>toolsView(tab),sources};
     root.innerHTML=views[page]();
+    window.TRIP_VERSION?.render();
     if(move){window.scrollTo(0,0);root.focus({preventScroll:true});}
     if(!canStore)root.insertAdjacentHTML('afterbegin','<p class="panel small">這個瀏覽器目前無法保存資料。你仍可在本次開啟期間使用與匯出。</p>');
     if(page==='home'&&!weather.attempted&&!localFile)updateWeather();

@@ -2,6 +2,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 import { runInNewContext } from 'node:vm';
+import { bundleFolder, buildIdPattern, loadRelease, makeBuildId, renderOnline, sourceFiles, versionPattern } from './site-files.mjs';
 
 const read = (name, encoding = 'utf8') => readFile(new URL('../' + name, import.meta.url), encoding);
 const window = {};
@@ -9,6 +10,7 @@ for (const name of ['data.js','transport.js']) runInNewContext(await read(name),
 const { days, tasks, members } = window.TRIP;
 const { airport, plans, fields } = window.TRANSPORT;
 const time = (date,e) => Date.parse(date+'T'+e.time+':00'+(e.zone==='TST'?'+08:00':'+09:00'));
+const embeddedRelease = html => JSON.parse(html.match(/<script id="trip-release" type="application\/json">(.*?)<\/script>/)?.[1] ?? 'null');
 
 test('fixed itinerary keeps the arrival and return buffers', () => {
   assert.equal(days.length, 5);
@@ -44,4 +46,29 @@ test('the offline deliverable contains inline code and photos', async () => {
   assert.equal((html.match(/data:image\/jpeg;base64,/g)||[]).length,5);
   assert.doesNotMatch(html,/<script[^>]+src=|href="styles\.css"/);
   assert.ok(html.includes('window.TRIP_ASSETS = {'));
+  assert.ok(html.includes('data-trip-offline'));
+  assert.deepEqual(embeddedRelease(html),await loadRelease());
+});
+
+test('the deployed HTML, immutable assets and manifest are the same release', async () => {
+  const release = await loadRelease();
+  const files = await sourceFiles();
+  const folder = bundleFolder(release);
+  assert.match(release.version,versionPattern);
+  assert.match(release.buildId,buildIdPattern);
+  assert.equal(new Date(release.deployedAt).toISOString(),release.deployedAt);
+  assert.equal(makeBuildId(release.version,release.deployedAt,files),release.buildId);
+  const html = await read('index.html');
+  assert.deepEqual(embeddedRelease(html),release);
+  assert.equal(await read(folder+'/styles.css'),files.css);
+  assert.equal(await read(folder+'/app.js'),files.js);
+  assert.equal(html,renderOnline(files,release));
+  assert.ok(release.version && (await read('CHANGELOG.md')).split('\n').some(line=>line.startsWith('## '+release.version+' ')));
+});
+
+test('the release keeps the existing personal storage key and shared Sheet URL', async () => {
+  const app = await read(bundleFolder(await loadRelease())+'/app.js');
+  assert.match(app,/const storageKey='tokyo-family-trip-2027\.v1'/);
+  assert.doesNotMatch(app,/localStorage\.(clear|removeItem)\(/);
+  assert.ok(app.includes('https://docs.google.com/spreadsheets/d/16OU0Qs6VKAxtWk8WAOqO6zI-ulmPC3-Z/edit?gid=1455147624#gid=1455147624'));
 });
