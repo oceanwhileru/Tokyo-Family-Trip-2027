@@ -1,5 +1,6 @@
 import { createHash, createHmac, randomBytes, timingSafeEqual } from 'node:crypto';
 import { cleanEntry, validId } from './ledger-entry.mjs';
+import { cleanExpense } from './shared-expenses.mjs';
 
 const loginCookie = '__Host-trip-login';
 const proofPattern = /^[A-Za-z0-9_-]{43}$/;
@@ -29,7 +30,7 @@ async function body(req, limit) {
   catch { throw new HttpError(400, 'invalid_json'); }
 }
 
-export function createApi({ oauth, store, site, backend, secret, allowedMembers, now = Date.now }) {
+export function createApi({ oauth, store, expenseSheet, site, backend, secret, allowedMembers, now = Date.now }) {
   const web = new URL(site);
   const redirectUri = new URL('/auth/callback', backend).href;
   const memberFor = email => Object.hasOwn(allowedMembers, email) && allowedMembers[email];
@@ -48,9 +49,13 @@ export function createApi({ oauth, store, site, backend, secret, allowedMembers,
       return parsed.kind === kind && parsed.exp > now() ? parsed : null;
     } catch { return null; }
   }
-  function goBack(res, fields) {
+  const expenseSheetCheck=expenseSheet?.check().then(()=>true,error=>{
+    console.error('Expense sheet startup check failed', error.response?.status??error.code??error.message);
+    return false;
+  });
+  function goBack(res, fields, view='ledger') {
     const url = new URL(web.href);
-    url.hash = 'tools/ledger?' + new URLSearchParams(fields);
+    url.hash = 'tools/' + (view==='expenses'?'expenses':'ledger') + '?' + new URLSearchParams(fields);
     res.writeHead(303, { Location: url.href }).end();
   }
   function json(res, status, value) {
@@ -65,7 +70,8 @@ export function createApi({ oauth, store, site, backend, secret, allowedMembers,
     const state = random();
     const nonce = random();
     const verifier = random();
-    cookie(res, encode({kind: 'login', state, nonce, verifier, challenge, exp: now() + duration.login}), duration.login / 1000);
+    const view = url.searchParams.get('view')==='expenses'?'expenses':'ledger';
+    cookie(res, encode({kind: 'login', state, nonce, verifier, challenge, view, exp: now() + duration.login}), duration.login / 1000);
     const location = oauth.authorize({state, nonce, verifier, redirectUri});
     res.writeHead(302, { Location: location }).end();
   }
@@ -76,19 +82,19 @@ export function createApi({ oauth, store, site, backend, secret, allowedMembers,
     cookie(res, '', 0);
     const code = url.searchParams.get('code');
     if (!previous || previous.state !== url.searchParams.get('state') || !code) {
-      return goBack(res, {error: 'login'});
+      return goBack(res, {error: 'login'}, previous?.view);
     }
     const identity = await oauth.authenticate({code, verifier: previous.verifier, redirectUri});
     const email = identity.email?.toLowerCase();
     const member = identity.email_verified && memberFor(email);
     if (!names.has(member) || !/^\d{6,40}$/.test(identity.sub ?? '') || identity.nonce !== previous.nonce) {
-      return goBack(res, {error: 'account'});
+      return goBack(res, {error: 'account'}, previous.view);
     }
     const handoff = random();
     await store.issueLogin(digest(handoff), {
       challenge: previous.challenge, sub: identity.sub, member, exp: now() + duration.handoff
     });
-    return goBack(res, {handoff});
+    return goBack(res, {handoff}, previous.view);
   }
   return async function api(req, res) {
     res.setHeader('Cache-Control', 'no-store');
@@ -99,6 +105,10 @@ export function createApi({ oauth, store, site, backend, secret, allowedMembers,
       const url = new URL(req.url, backend);
       const path = url.pathname;
       if (method === 'GET' && path === '/health') return json(res, 200, {ok: true});
+      if (method === 'GET' && path === '/health/expense-sync') {
+        const ok=Boolean(await expenseSheetCheck);
+        return json(res, ok?200:503, {ok});
+      }
       if (method === 'GET' && path === '/auth/start') return await start(url, res);
       if (method === 'GET' && path === '/auth/callback') {
         try { return await callback(req, url, res); }
@@ -121,6 +131,14 @@ export function createApi({ oauth, store, site, backend, secret, allowedMembers,
       }
       const user = decode(req.headers.authorization?.match(/^Bearer (\S+)$/)?.[1], 'session');
       if (!user || !names.has(user.member)) throw new HttpError(401, 'expired_session');
+      if (method === 'POST' && path === '/shared-expenses') {
+        if (!expenseSheet) throw new HttpError(503, 'expense_sync_unavailable');
+        const data=await body(req, 4096);
+        if (data?.member!==user.member) throw new HttpError(403, 'profile_mismatch');
+        const expense=cleanExpense(data.expense, now());
+        if (!expense) throw new HttpError(400, 'invalid_expense');
+        return json(res, 200, await expenseSheet.add(user.sub, expense));
+      }
       if (method === 'GET' && path === '/entries') {
         return json(res, 200, {member: user.member, rows: await store.list(user.sub)});
       }

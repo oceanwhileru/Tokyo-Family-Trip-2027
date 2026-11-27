@@ -98,5 +98,5 @@ test('the release keeps the existing personal storage key and shared Sheet URL',
   const app = await read(bundleFolder(await loadRelease())+'/app.js');
   assert.match(app,/const storageKey='tokyo-family-trip-2027\.v1'/);
   assert.doesNotMatch(app,/localStorage\.(clear|removeItem)\(/);
-  assert.ok(app.includes('https://docs.google.com/spreadsheets/d/16OU0Qs6VKAxtWk8WAOqO6zI-ulmPC3-Z/edit?gid=1455147624#gid=1455147624'));
+  assert.ok(app.includes('https://docs.google.com/spreadsheets/d/1GTniUXzounJD-Jsp2ElEUULLxNxt9GQ6WsqLeEOfQS8/edit#gid=1383967002'));
 });

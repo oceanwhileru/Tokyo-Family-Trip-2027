@@ -51,9 +51,14 @@ for secret in "$oauth_secret" "$session_secret" "$members_secret"; do
 done
 
 source_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+runtime_env="GOOGLE_CLOUD_PROJECT=$TRIP_PROJECT,TRIP_SITE_URL=$TRIP_SITE_URL,TRIP_BACKEND_URL=$TRIP_BACKEND_URL,GOOGLE_OAUTH_CLIENT_ID=$GOOGLE_OAUTH_CLIENT_ID"
+if [[ -n "${TRIP_EXPENSE_SHEET_ID:-}" ]]; then
+  : "${TRIP_EXPENSE_TAB_ID:?Set TRIP_EXPENSE_TAB_ID}"
+  runtime_env="$runtime_env,TRIP_EXPENSE_SHEET_ID=$TRIP_EXPENSE_SHEET_ID,TRIP_EXPENSE_TAB_ID=$TRIP_EXPENSE_TAB_ID"
+fi
 gcp run deploy "$TRIP_SERVICE" --region="$TRIP_REGION" --source="$source_dir" \
   --build-service-account="projects/$TRIP_PROJECT/serviceAccounts/$build_account" \
   --service-account="$runtime_account" --no-invoker-iam-check --cpu=1 --memory=512Mi \
   --min-instances=0 --max-instances=1 --concurrency=20 --timeout=35 \
-  --set-env-vars="GOOGLE_CLOUD_PROJECT=$TRIP_PROJECT,TRIP_SITE_URL=$TRIP_SITE_URL,TRIP_BACKEND_URL=$TRIP_BACKEND_URL,GOOGLE_OAUTH_CLIENT_ID=$GOOGLE_OAUTH_CLIENT_ID" \
+  --set-env-vars="$runtime_env" \
   --set-secrets="GOOGLE_OAUTH_CLIENT_SECRET=$oauth_secret:latest,TRIP_SESSION_SECRET=$session_secret:latest,TRIP_MEMBERS_JSON=$members_secret:latest"

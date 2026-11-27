@@ -219,7 +219,7 @@ details[open]>summary{margin-bottom:6px}
 @media(prefers-reduced-motion:reduce){*,*::before,*::after{scroll-behavior:auto!important;transition:none!important}}
 
 </style>
-  <script id="trip-release" type="application/json">{"version":"V2.0.5","deployedAt":"2026-11-27T15:51:45.744Z","buildId":"v2.0.5-2733bdf10610"}</script>
+  <script id="trip-release" type="application/json">{"version":"V2.0.6","deployedAt":"2026-11-27T16:56:56.185Z","buildId":"v2.0.6-dbabe291ba8f"}</script>
 </head>
 <body>
   <a class="skip" href="#content">跳至內容</a>
@@ -776,7 +776,7 @@ window.TRIP_LEDGER_CLOUD = (() => {
     try { sessionStorage.removeItem(session); } catch {}
   }
 
-  async function login() {
+  async function login(view='ledger') {
     const bytes = crypto.getRandomValues(new Uint8Array(32));
     const base64 = value => btoa(String.fromCharCode(...value)).replace(/\+/g,'-').replace(/\//g,'_').replace(/=/g,'');
     const proof = base64(bytes);
@@ -784,15 +784,16 @@ window.TRIP_LEDGER_CLOUD = (() => {
     sessionStorage.setItem(proofKey, proof);
     const url = new URL('/auth/start', base);
     url.searchParams.set('challenge', challenge);
+    if(view==='expenses')url.searchParams.set('view',view);
     location.assign(url.href);
   }
 
   async function acceptReturn() {
     const [path, params] = location.hash.slice(1).split('?');
-    if (path !== 'tools/ledger' || !params) return null;
+    if (!['tools/ledger','tools/expenses'].includes(path) || !params) return null;
     const fields = new URLSearchParams(params);
     if (!fields.has('handoff') && !fields.has('error')) return null;
-    history.replaceState(history.state, '', '#tools/ledger');
+    history.replaceState(history.state, '', '#'+path);
     const proof = sessionStorage.getItem(proofKey);
     sessionStorage.removeItem(proofKey);
     if (fields.get('error') === 'account') return '請使用已加入旅行帳本的 Google 帳號。';
@@ -806,6 +807,7 @@ window.TRIP_LEDGER_CLOUD = (() => {
   return {
     get signedIn() { return Boolean(token); },
     login, logout, acceptReturn,
+    shareExpense: (member,expense) => request('/shared-expenses','POST',{member,expense}),
     read: () => request('/entries'),
     add: rows => request('/entries','POST',{rows}),
     remove: id => request('/entries/'+encodeURIComponent(id),'DELETE')
@@ -821,6 +823,7 @@ window.TRIP_LEDGER_CLOUD = (() => {
   const L = window.TRIP_LEDGER;
   const cloud = window.TRIP_LEDGER_CLOUD;
   const cloudLedger = {member:'',rows:[],busy:false,message:''};
+  const expenseSync = {working:false,message:''};
   const S = D.src;
   const $ = (q, root = document) => root.querySelector(q);
   const root = $('#content');
@@ -830,7 +833,7 @@ window.TRIP_LEDGER_CLOUD = (() => {
     ['transport','交通'],['tools','旅行工具','工具'],['sources','資料與離線','資料']
   ];
   const photoNames = {fuji:'河口湖畔的富士山',ueno:'上野站正門',ginza:'銀座四丁目街景',gotemba:'御殿場 Premium Outlets',narita:'成田機場第一航廈'};
-  const sharedExpenseSheet = 'https://docs.google.com/spreadsheets/d/16OU0Qs6VKAxtWk8WAOqO6zI-ulmPC3-Z/edit?gid=1455147624#gid=1455147624';
+  const sharedExpenseSheet = 'https://docs.google.com/spreadsheets/d/1GTniUXzounJD-Jsp2ElEUULLxNxt9GQ6WsqLeEOfQS8/edit#gid=1383967002';
   const FX_DEFAULT = {rate:0.20688,date:'2026-11-25',mode:'reference'};
   const fx = {value:FX_DEFAULT,message:''};
   const weather = {message:'',value:[],running:false,attempted:false};
@@ -1276,17 +1279,66 @@ window.TRIP_LEDGER_CLOUD = (() => {
     const rows=visibleExpenses();
     if(!rows.length)return '<p class="small muted section">'+(expensePerson?'沒有此成員的支出紀錄。':'尚無支出。')+'</p>';
     return '<p class="small muted show-count">共 '+rows.length+' 筆</p>'+rows.map(r=>'<div class="list-row"><h3 class="break-anywhere">'+esc(r.name)+'</h3><p>'+
-      esc((r.currency==='JPY'?jpy(r.amount):twd(r.amount))+' · 代墊 '+r.payer+' · '+r.people.join('、'))+'</p><div class="tools-row"><button type="button" class="btn danger" data-action="remove-expense" data-value="'+esc(r.id)+'">移除</button></div></div>').join('');
+      esc((r.currency==='JPY'?jpy(r.amount):twd(r.amount))+' · 代墊 '+r.payer+' · '+r.people.join('、'))+'</p><div class="tools-row">'+
+      (cloud?(r.sheetSynced?chip('已同步試算表'):'<button type="button" class="btn" data-action="sync-expense" data-value="'+esc(r.id)+'" '+(expenseSync.working?'disabled':'')+'>同步這筆</button>'):'')+
+      '<button type="button" class="btn danger" data-action="remove-expense" data-value="'+esc(r.id)+'">'+(r.sheetSynced?'移除本機紀錄':'移除')+'</button></div></div>').join('');
+  }
+  function expenseControls() {
+    if(!cloud)return '<p class="muted small">在正式網站登入後可同步支出。</p>';
+    return '<p>登入 Google 後，新支出會同步到共用試算表。既有支出可在下方逐筆同步。</p><div class="tools-row">'+
+      button(cloud.signedIn?'expense-logout':'expense-login',cloud.signedIn?'登出 Google':'使用 Google 登入')+'</div>'+
+      '<p class="form-note small" role="status">'+esc(expenseSync.message)+'</p>';
+  }
+  function drawExpenseSync() {
+    const state=$('#expense-sync');
+    if(state)state.innerHTML=expenseControls();
+    const list=$('#expense-list');
+    if(list)list.innerHTML=expenseList();
+    const submit=$('#expense-form button[type=submit]');
+    if(submit)submit.disabled=expenseSync.working;
+  }
+  async function expenseLogin() {
+    if(expenseSync.working)return;
+    try{await cloud.login('expenses');}
+    catch{expenseSync.message='無法開啟 Google 登入，請用 Safari 或 Chrome 重試。';drawExpenseSync();}
+  }
+  async function sendExpense(profile,row) {
+    if(!cloud||expenseSync.working||row.sheetSynced)return;
+    if(!cloud.signedIn){
+      expenseSync.message='這筆支出已保留在本機。請使用 Google 登入，再按「同步這筆」。';
+      drawExpenseSync();return;
+    }
+    expenseSync.working=true;
+    expenseSync.message='正在更新共用試算表…';
+    drawExpenseSync();
+    try{
+      await cloud.shareExpense(profile,row);
+      row.sheetSynced=true;
+      save();
+      expenseSync.message='已同步至「代墊明細」。';
+    }catch(error){
+      if(error.status===401){
+        clearCloudLedger();
+        expenseSync.message='登入已過期。請重新登入，再按「同步這筆」。';
+      }else if(error.status===403){
+        expenseSync.message='請使用目前所選成員的 Google 帳號登入，再重試同步。';
+      }else{
+        expenseSync.message='暫時無法同步。支出已保留在本機，可按「同步這筆」重試。';
+      }
+    }finally{
+      expenseSync.working=false;
+      drawExpenseSync();
+    }
   }
   function expenses() {
     const rows=me().expenses;
     const yen=rows.filter(r=>r.currency==='JPY').reduce((sum,row)=>sum+row.amount,0);
     const nt=rows.filter(r=>r.currency==='TWD').reduce((sum,row)=>sum+row.amount,0);
     const payments=['JPY','TWD'].flatMap(code=>settle(rows,code).map(([from,to,value])=>'<li>'+esc(from+' → '+to+' '+(code==='JPY'?jpy(value):twd(value)))+'</li>'));
-    return '<article class="panel"><h2>全家共用分帳</h2><p>到 Google 試算表一起登記代墊、分攤和還款。請用已獲分享權限的 Google 帳號開啟。</p>'+
+    return '<article class="panel"><h2>全家共用分帳</h2><div id="expense-sync">'+expenseControls()+'</div>'+
       links([[sharedExpenseSheet,'開啟共用 Google 試算表']])+'</article>'+
       '<div class="grid two section"><article class="panel"><h2>'+esc(memory.profile)+' 的個人試算</h2><p class="muted">試算紀錄保存在這台裝置的瀏覽器。各幣別獨立結算。</p>'+
-      '<form class="form-grid section" id="expense-form"><label>項目<input name="name" maxlength="100" required placeholder="例：成田包車"></label><label>金額<input name="amount" type="number" min="1" max="99999999" step="1" required inputmode="numeric"></label><label>幣別<select name="currency"><option>JPY</option><option>TWD</option></select></label><label>代墊人<select name="payer">'+options(D.members,memory.profile)+'</select></label>'+
+      '<form class="form-grid section" id="expense-form"><label>項目<input name="name" maxlength="100" required placeholder="例：成田包車"></label><label>日期<input name="date" type="date" value="'+L.dateInTaipei()+'" max="'+L.dateInTaipei()+'"></label><label>金額<input name="amount" type="number" min="1" max="99999999" step="1" required inputmode="numeric"></label><label>幣別<select name="currency"><option>JPY</option><option>TWD</option></select></label><label>代墊人<select name="payer">'+options(D.members,memory.profile)+'</select></label>'+
       '<fieldset class="wide"><legend>分攤成員</legend><div class="member-row">'+D.members.map(n=>'<label class="inline-check"><input type="checkbox" name="people" value="'+n+'" checked>'+n+'</label>').join('')+'</div></fieldset>'+
       '<button type="submit" class="btn primary">加入支出</button></form></article><article class="panel"><h2>全部支出結算</h2><p class="result">'+jpy(yen)+' ＋ '+twd(nt)+'<br>總計約 '+twd(yen*fx.value.rate+nt)+'</p>'+
       '<p class="small muted">餘數依畫面成員順序各加 1 元，轉帳逐幣別結算。'+esc(fxBrief())+'。</p>'+(payments.length?'<ul>'+payments.join('')+'</ul>':'<p>目前無需互轉。</p>')+'</article></div>'+
@@ -1543,11 +1595,18 @@ window.TRIP_LEDGER_CLOUD = (() => {
     if(!cloud)return;
     try{
       const error=await cloud.acceptReturn();
-      if(error){cloudLedger.message=error;render();return;}
-      if(cloud.signedIn)await runCloudLedger(loadCloudLedger);
+      if(currentRoute().tab==='expenses'){
+        expenseSync.message=error||'';
+        drawExpenseSync();
+      }else if(error){
+        cloudLedger.message=error;render();
+      }else if(cloud.signedIn&&currentRoute().tab==='ledger'){
+        await runCloudLedger(loadCloudLedger);
+      }
     }catch{
-      cloudLedger.message='登入未完成，請再試一次。';
-      drawCloudLedger();
+      const message='登入未完成，請再試一次。';
+      if(currentRoute().tab==='expenses'){expenseSync.message=message;drawExpenseSync();}
+      else{cloudLedger.message=message;drawCloudLedger();}
     }
   }
   function updateLedgerFields(form){
@@ -1679,7 +1738,17 @@ window.TRIP_LEDGER_CLOUD = (() => {
     'export-ledger':exportLedger,
     'edit-shop':btn=>editShopping(btn.dataset.value),
     'remove-shop':btn=>removeRow('shopping',btn.dataset.value),
-    'remove-expense':btn=>removeRow('expenses',btn.dataset.value),
+    'remove-expense':btn=>{if(!expenseSync.working)removeRow('expenses',btn.dataset.value);},
+    'sync-expense':btn=>{
+      const row=me().expenses.find(item=>item.id===btn.dataset.value);
+      if(row)sendExpense(memory.profile,row);
+    },
+    'expense-login':expenseLogin,
+    'expense-logout':()=>{
+      if(expenseSync.working)return;
+      expenseSync.message='已登出 Google。';
+      clearCloudLedger();
+    },
     'remove-ledger':btn=>removeLedgerEntry(btn.dataset.value),
     'ledger-login':()=>runCloudLedger(()=>cloud.login()),
     'ledger-logout':()=>clearCloudLedger('已切回本機帳本。'),
@@ -1758,12 +1827,16 @@ window.TRIP_LEDGER_CLOUD = (() => {
       save();render();notify('購物清單已儲存。');
     }
     if(formId==='expense-form'){
+      if(expenseSync.working)return;
       const name=clean('name');
       const amount=numeric('amount');
       const people=D.members.filter(n=>data.getAll('people').includes(n));
-      if(!name||!Number.isInteger(amount)||amount<1||!people.length){notify('請輸入項目、整數金額及至少一位分攤成員。');return;}
-      me().expenses.push({id:id(),name,amount,people,payer:clean('payer'),currency:clean('currency')});
+      if(!name||!Number.isInteger(amount)||amount<1||amount>99999999||!people.length){notify('請輸入項目、有效的整數金額及至少一位分攤成員。');return;}
+      const row={id:id(),name,amount,people,payer:clean('payer'),currency:clean('currency'),date:clean('date')};
+      const profile=memory.profile;
+      me().expenses.push(row);
       save();render();notify('已加入支出。');
+      if(cloud)sendExpense(profile,row);
     }
     if(formId==='ledger-form')addLedgerEntry(form,clean);
   });

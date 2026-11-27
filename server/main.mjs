@@ -1,9 +1,10 @@
 import { createHash } from 'node:crypto';
 import { createServer } from 'node:http';
 import { Firestore } from '@google-cloud/firestore';
-import { OAuth2Client } from 'google-auth-library';
+import { GoogleAuth, OAuth2Client } from 'google-auth-library';
 import { createApi } from './api.mjs';
 import { firestoreStore } from './ledger-store.mjs';
+import { sheetExpenses } from './shared-expenses.mjs';
 
 const env = name => {
   const value = process.env[name];
@@ -40,5 +41,13 @@ const oauth = {
 };
 
 const store = firestoreStore(new Firestore({projectId: env('GOOGLE_CLOUD_PROJECT')}));
-const handler = createApi({oauth, store, site, backend, secret, allowedMembers});
+const expenseSheet=process.env.TRIP_EXPENSE_SHEET_ID ? sheetExpenses({
+  spreadsheetId:process.env.TRIP_EXPENSE_SHEET_ID,
+  sheetId:env('TRIP_EXPENSE_TAB_ID'),
+  request:(()=>{
+    const auth=new GoogleAuth({scopes:['https://www.googleapis.com/auth/spreadsheets']});
+    return async (url,data) => (await auth.request({url,method:data?'POST':'GET',data,timeout:9000})).data;
+  })()
+}) : undefined;
+const handler = createApi({oauth, store, expenseSheet, site, backend, secret, allowedMembers});
 createServer(handler).listen(Number(process.env.PORT || 8080), '0.0.0.0');

@@ -8,4 +8,8 @@
 4. 把此資料夾部署到 Cloud Run。執行階段設定 `TRIP_SITE_URL`、`TRIP_BACKEND_URL`、`GOOGLE_CLOUD_PROJECT`、`GOOGLE_OAUTH_CLIENT_ID`，以及上述三個 Secret。讓瀏覽器能呼叫服務，再由服務驗證各個帳本請求。可使用請求式計費、最少零個執行個體。
 5. 驗證 `/health`、匿名讀取拒絕、Google 登入與兩個工作階段的隔離之後，將伺服器網址填入根目錄的 `ledger-cloud-config.js` 並使用既有版本發布流程部署網站。
 
+## 費用分攤
+
+啟用 Google Sheets API，將指定的原生試算表授予 Cloud Run 服務帳戶編輯權，並設定 `TRIP_EXPENSE_SHEET_ID` 與 `TRIP_EXPENSE_TAB_ID`。部署後查詢 `/health/expense-sync`，確認服務能讀到「代墊明細」的欄位及計算公式。每筆新增支出和避免重複寫入用的識別資料會在同一批請求中儲存。以前只存在瀏覽器的支出由使用者選擇逐筆同步。
+
 可用 `npm ci` 和 `npm test` 執行伺服器測試。測試使用受控的登入替身和記憶體帳本，涵蓋不同帳號、重試、鎖定匯率和重複匯入。

@@ -49,7 +49,9 @@ test('login handoff, concurrent device identity, locked amounts, import and dele
       return {sub,nonce,email:account+'@example.test',email_verified:true};
     }
   };
-  const api = createApi({oauth,store,site:origin+'/Tokyo/',backend:'https://backend.example',
+  const pushes=[];
+  const expenseSheet={check:async()=>{},add:async (sub,entry)=>{pushes.push([sub,entry]);return {added:true};}};
+  const api = createApi({oauth,store,expenseSheet,site:origin+'/Tokyo/',backend:'https://backend.example',
     secret:'test-only-session-signing-secret-not-for-use',
     allowedMembers:{'judy@example.test':'Judy','amy@example.test':'Amy'},now:()=>time});
   const server = createServer(api).listen(0,'127.0.0.1');
@@ -62,9 +64,9 @@ test('login handoff, concurrent device identity, locked amounts, import and dele
     ...(value?{body:JSON.stringify(value)}:{})
   });
 
-  async function begin(account, incorrectState=false) {
+  async function begin(account, incorrectState=false, view='ledger') {
     const verifier=proof();
-    const start=await request('/auth/start?challenge='+digest(verifier));
+    const start=await request('/auth/start?challenge='+digest(verifier)+'&view='+view);
     assert.equal(start.status, 302);
     assert.match(start.headers.get('set-cookie'),/; Secure; HttpOnly; SameSite=Lax/);
     const cookie=start.headers.get('set-cookie').split(';')[0];
@@ -72,7 +74,7 @@ test('login handoff, concurrent device identity, locked amounts, import and dele
     const params=new URLSearchParams({code:fields.get('id')+'/'+account,state:incorrectState?'wrong':fields.get('state')});
     const back=await request('/auth/callback?'+params,{headers:{Cookie:cookie}});
     assert.equal(back.status,303);
-    assert.match(back.headers.get('location'),/^https:\/\/family\.example\/Tokyo\/#tools\/ledger\?/);
+    assert.ok(back.headers.get('location').startsWith(origin+'/Tokyo/#tools/'+view+'?'));
     const result=new URLSearchParams(new URL(back.headers.get('location')).hash.split('?')[1]);
     return {result,verifier};
   }
@@ -90,10 +92,18 @@ test('login handoff, concurrent device identity, locked amounts, import and dele
   assert.equal((await call('/entries',{caller:'https://elsewhere.example'})).status,403);
   assert.equal((await begin('judy',true)).result.get('error'),'login');
   assert.equal((await begin('stranger')).result.get('error'),'account');
+  assert.ok((await begin('judy',false,'expenses')).result.get('handoff'));
   const first=await signIn('judy');
   const second=await signIn('judy');
   const amy=await signIn('amy');
   assert.equal(first.member,'Judy');
+  const expense={id:'test-expense',name:'餐費',amount:5000,currency:'TWD',payer:'Judy',people:['Judy','Amy'],date:''};
+  const send=(token,member,record)=>call('/shared-expenses',{method:'POST',token,value:{member,expense:record}});
+  assert.equal((await send(undefined,'Judy',expense)).status,401);
+  assert.equal((await send(amy.token,'Judy',expense)).status,403);
+  assert.equal((await send(first.token,'Judy',{...expense,people:[]})).status,400);
+  assert.equal((await send(first.token,'Judy',expense)).status,200);
+  assert.deepEqual(pushes,[['2000001',expense]]);
   const save = (token, record) => call('/entries',{method:'POST',token,value:{rows:[record]}});
   assert.equal((await save(first.token,{...row,twdCents:1})).status,400);
   assert.deepEqual(await (await save(first.token,row)).json(),{added:1});

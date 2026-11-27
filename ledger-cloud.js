@@ -30,7 +30,7 @@ window.TRIP_LEDGER_CLOUD = (() => {
     try { sessionStorage.removeItem(session); } catch {}
   }
 
-  async function login() {
+  async function login(view='ledger') {
     const bytes = crypto.getRandomValues(new Uint8Array(32));
     const base64 = value => btoa(String.fromCharCode(...value)).replace(/\+/g,'-').replace(/\//g,'_').replace(/=/g,'');
     const proof = base64(bytes);
@@ -38,15 +38,16 @@ window.TRIP_LEDGER_CLOUD = (() => {
     sessionStorage.setItem(proofKey, proof);
     const url = new URL('/auth/start', base);
     url.searchParams.set('challenge', challenge);
+    if(view==='expenses')url.searchParams.set('view',view);
     location.assign(url.href);
   }
 
   async function acceptReturn() {
     const [path, params] = location.hash.slice(1).split('?');
-    if (path !== 'tools/ledger' || !params) return null;
+    if (!['tools/ledger','tools/expenses'].includes(path) || !params) return null;
     const fields = new URLSearchParams(params);
     if (!fields.has('handoff') && !fields.has('error')) return null;
-    history.replaceState(history.state, '', '#tools/ledger');
+    history.replaceState(history.state, '', '#'+path);
     const proof = sessionStorage.getItem(proofKey);
     sessionStorage.removeItem(proofKey);
     if (fields.get('error') === 'account') return '請使用已加入旅行帳本的 Google 帳號。';
@@ -60,6 +61,7 @@ window.TRIP_LEDGER_CLOUD = (() => {
   return {
     get signedIn() { return Boolean(token); },
     login, logout, acceptReturn,
+    shareExpense: (member,expense) => request('/shared-expenses','POST',{member,expense}),
     read: () => request('/entries'),
     add: rows => request('/entries','POST',{rows}),
     remove: id => request('/entries/'+encodeURIComponent(id),'DELETE')
