@@ -13,7 +13,7 @@ export const integrity = content => 'sha256-'+createHash('sha256').update(conten
 export const bundleFolder = release => 'releases/'+release.buildId;
 
 export async function sourceFiles() {
-  const files = ['data.js','transport.js','site-version.js','app.js'];
+  const files = ['data.js','transport.js','site-version.js','ledger-rates.js','app.js'];
   const [template,css,...scripts] = await Promise.all(['index.template.html','styles.css',...files].map(path=>read(path)));
   const js = scripts.map((script,index)=>'/* '+files[index]+' */\n'+script).join('\n;\n');
   return {template,css,js};

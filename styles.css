@@ -153,6 +153,14 @@ details[open]>summary{margin-bottom:6px}
 .form-note{margin-top:8px}
 .shopping-list{margin-top:12px}
 .list-row{padding:12px 0;border-top:1px solid var(--line)}
+.ledger-fields{min-width:0;border:0;padding:0;margin-inline:0}
+.ledger-table{overflow-x:auto}
+.ledger-table table{width:100%;border-collapse:collapse;min-width:750px}
+.ledger-table th,.ledger-table td{border-bottom:1px solid var(--line);padding:9px 10px;text-align:start;vertical-align:top}
+.ledger-table th{background:var(--forest);color:white;white-space:nowrap}
+.ledger-table td{overflow-wrap:anywhere;max-width:220px}
+.ledger-table .ledger-number{text-align:end;font-variant-numeric:tabular-nums;white-space:nowrap}
+.ledger-number small{display:block}
 .break-anywhere{overflow-wrap:anywhere}
 .source-group{margin-bottom:12px}
 .legal{border-left:4px solid var(--coral)}

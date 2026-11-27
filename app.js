@@ -2,6 +2,7 @@
 (() => {
   const D = window.TRIP;
   const T = window.TRANSPORT;
+  const L = window.TRIP_LEDGER;
   const S = D.src;
   const $ = (q, root = document) => root.querySelector(q);
   const root = $('#content');
@@ -16,11 +17,15 @@
   const fx = {value:FX_DEFAULT,message:''};
   const weather = {message:'',value:[],running:false,attempted:false};
   const filter = {dining:{},shopping:{},transport:{}};
+  let expensePerson = '';
   const defaultModel = () => {
     const profiles = Object.fromEntries(D.members.map(name => [name,{done:{},tasks:{},favorites:{},shopping:[],expenses:[]}]));
     return {profile:'Judy',profiles,fx:null};
   };
   const storageKey='tokyo-family-trip-2027.v1';
+  const ledgerKey=profile=>'tokyo-family-trip-2027.ledger.v1.'+profile;
+  const ledgerMemory=Object.fromEntries(D.members.map(name=>[name,[]]));
+  let canStoreLedger=true;
   let memory = defaultModel();
   let canStore = true;
   try {
@@ -424,12 +429,16 @@
         '<p class="small break-anywhere">'+esc([v.brand,v.note].filter(Boolean).join(' · '))+'</p><p class="small">'+esc((v.budget!=null?'預算 '+jpy(v.budget):'')+(v.price!=null?' · '+jpy(v.price)+' ≈ '+twd(v.price*fx.value.rate):''))+
         '</p><div class="tools-row"><button type="button" class="btn" data-action="edit-shop" data-value="'+esc(v.id)+'">編輯</button><button type="button" class="btn danger" data-action="remove-shop" data-value="'+esc(v.id)+'">移除</button></div></div>').join(''):'<p class="muted">清單目前是空的。</p>')+'</div></article>';
   }
+  function shares(row) {
+    const base = Math.floor(row.amount/row.people.length);
+    const remainder = row.amount%row.people.length;
+    return Object.fromEntries(row.people.map((name,index)=>[name,base+(index<remainder?1:0)]));
+  }
   function settle(rows,code) {
     const balances=Object.fromEntries(D.members.map(n=>[n,0]));
     for(const row of rows.filter(r=>r.currency===code)){
-      const share=Math.floor(row.amount/row.people.length);
       balances[row.payer]+=row.amount;
-      row.people.forEach((n,i)=>{balances[n]-=share+(i<row.amount%row.people.length?1:0);});
+      for(const [name,value] of Object.entries(shares(row)))balances[name]-=value;
     }
     const debt=D.members.filter(n=>balances[n]<0).map(n=>({n,value:-balances[n]}));
     const credit=D.members.filter(n=>balances[n]>0).map(n=>({n,value:balances[n]}));
@@ -442,6 +451,15 @@
     }
     return payments;
   }
+  function visibleExpenses() {
+    return me().expenses.filter(row=>!expensePerson||row.payer===expensePerson||row.people.includes(expensePerson));
+  }
+  function expenseList() {
+    const rows=visibleExpenses();
+    if(!rows.length)return '<p class="small muted section">'+(expensePerson?'沒有此成員的支出紀錄。':'尚無支出。')+'</p>';
+    return '<p class="small muted show-count">共 '+rows.length+' 筆</p>'+rows.map(r=>'<div class="list-row"><h3 class="break-anywhere">'+esc(r.name)+'</h3><p>'+
+      esc((r.currency==='JPY'?jpy(r.amount):twd(r.amount))+' · 代墊 '+r.payer+' · '+r.people.join('、'))+'</p><div class="tools-row"><button type="button" class="btn danger" data-action="remove-expense" data-value="'+esc(r.id)+'">移除</button></div></div>').join('');
+  }
   function expenses() {
     const rows=me().expenses;
     const yen=rows.filter(r=>r.currency==='JPY').reduce((sum,row)=>sum+row.amount,0);
@@ -452,14 +470,71 @@
       '<div class="grid two section"><article class="panel"><h2>'+esc(memory.profile)+' 的個人試算</h2><p class="muted">試算紀錄保存在這台裝置的瀏覽器。各幣別獨立結算。</p>'+
       '<form class="form-grid section" id="expense-form"><label>項目<input name="name" maxlength="100" required placeholder="例：成田包車"></label><label>金額<input name="amount" type="number" min="1" max="99999999" step="1" required inputmode="numeric"></label><label>幣別<select name="currency"><option>JPY</option><option>TWD</option></select></label><label>代墊人<select name="payer">'+options(D.members,memory.profile)+'</select></label>'+
       '<fieldset class="wide"><legend>分攤成員</legend><div class="member-row">'+D.members.map(n=>'<label class="inline-check"><input type="checkbox" name="people" value="'+n+'" checked>'+n+'</label>').join('')+'</div></fieldset>'+
-      '<button type="submit" class="btn primary">加入支出</button></form></article><article class="panel"><h2>結算</h2><p class="result">'+jpy(yen)+' ＋ '+twd(nt)+'<br>總計約 '+twd(yen*fx.value.rate+nt)+'</p>'+
+      '<button type="submit" class="btn primary">加入支出</button></form></article><article class="panel"><h2>全部支出結算</h2><p class="result">'+jpy(yen)+' ＋ '+twd(nt)+'<br>總計約 '+twd(yen*fx.value.rate+nt)+'</p>'+
       '<p class="small muted">餘數依畫面成員順序各加 1 元，轉帳逐幣別結算。'+esc(fxBrief())+'。</p>'+(payments.length?'<ul>'+payments.join('')+'</ul>':'<p>目前無需互轉。</p>')+'</article></div>'+
-      section('支出紀錄','<article class="panel">'+(rows.length?rows.map(r=>'<div class="list-row"><h3 class="break-anywhere">'+esc(r.name)+'</h3><p>'+
-        esc((r.currency==='JPY'?jpy(r.amount):twd(r.amount))+' · 代墊 '+r.payer+' · '+r.people.join('、'))+'</p><div class="tools-row"><button type="button" class="btn danger" data-action="remove-expense" data-value="'+esc(r.id)+'">移除</button></div></div>').join(''):'<p>尚無支出。</p>')+'</article>');
+      section('支出紀錄','<article class="panel"><div class="tools-row"><label for="expense-person">代墊或分攤成員</label>'+
+        '<select id="expense-person"><option value="">全部成員</option>'+options(D.members,expensePerson)+'</select>'+
+        button('export-expenses','匯出明細 CSV')+'</div><div id="expense-list" aria-live="polite">'+expenseList()+'</div></article>');
   }
-  const toolTabs=[['currency','匯率換算'],['shopping','購物清單'],['expenses','費用分攤']];
+
+  function ledgerMethods() {
+    return [...new Set([...L.methods,...ledgerEntries().map(row=>row.method)])];
+  }
+  function ledgerEntries(profile=memory.profile) {
+    if(canStoreLedger){
+      try{
+        const rows=JSON.parse(localStorage.getItem(ledgerKey(profile))||'[]');
+        if(Array.isArray(rows))ledgerMemory[profile]=rows;
+      }catch{canStoreLedger=false;}
+    }
+    return ledgerMemory[profile];
+  }
+  function storeLedger(profile,rows) {
+    ledgerMemory[profile]=rows;
+    if(!canStoreLedger)return;
+    try{localStorage.setItem(ledgerKey(profile),JSON.stringify(rows));}
+    catch{canStoreLedger=false;}
+  }
+  function ledgerRows() {
+    return [...ledgerEntries()].reverse().sort((a,b)=>b.date.localeCompare(a.date));
+  }
+  function ledgerRateDetail(row) {
+    if(row.currency==='TWD')return '';
+    const rate=Number(row.rate);
+    const source=row.source==='manual'?'手動輸入 · '+row.quoteDate:'台銀 '+row.quoteDate;
+    return '<small class="record-meta">'+esc(source+' · '+rate)+'</small>';
+  }
+  function ledgerTool() {
+    const today=L.dateInTaipei();
+    const rows=ledgerRows();
+    return '<article class="panel"><h2>'+esc(memory.profile)+' 的個人帳本</h2><p class="muted">資料保存在這個瀏覽器的個人帳本。若共用同一個瀏覽器，切換姓名即可查看其他本機帳本。</p>'+
+      '<form id="ledger-form"><fieldset class="form-grid ledger-fields section" aria-label="新增支出">'+
+      '<label>種類<select name="category">'+options(L.categories,L.categories[0])+'</select></label>'+
+      '<label>付款時間<input type="date" name="date" required value="'+today+'" max="'+today+'"></label>'+
+      '<label>支付方式<select name="method">'+ledgerMethods().map(v=>'<option value="method:'+esc(v)+'">'+esc(v)+'</option>').join('')+'<option value="custom">＋ 自訂支付方式</option></select></label>'+
+      '<div id="ledger-custom" hidden><label>自訂支付方式<input name="customMethod" maxlength="50" disabled></label></div>'+
+      '<label class="wide">支出明細<input name="detail" maxlength="50" required placeholder="最多 50 字"></label>'+
+      '<label>幣種<select name="currency">'+options(L.currencies,'TWD')+'</select></label>'+
+      '<label>原幣金額<input name="amount" inputmode="decimal" maxlength="13" required placeholder="例：10,000.50"></label>'+
+      '<label class="wide">備注<textarea name="note" maxlength="150" rows="2" placeholder="最多 150 字"></textarea></label>'+
+      '<details id="ledger-manual" class="wide" hidden><summary>手動填入台銀匯率</summary><label>每 1 外幣可換多少台幣<input name="manualRate" inputmode="decimal" maxlength="12" placeholder="例：0.1988" disabled></label></details>'+
+      '<button type="submit" class="btn primary">儲存支出</button></fieldset>'+
+      '<p class="form-note small" id="ledger-status" role="status"></p></form>'+
+      '<p class="record-meta">日圓與美元採付款日的台銀即期賣出牌告，儲存後固定。週末若沿用最近牌告，會標明牌告日期。</p>'+
+      links([[S.bank,'資料來源：臺灣銀行牌告匯率'],['https://rate.bot.com.tw/xrt/history','台銀歷史牌告'],['https://app.haotool.org/ratewise/','資料整理：匯率好工具 RateWise（https://app.haotool.org/ratewise/）']])+
+      '</article>'+
+      section('個人記帳明細','<article class="panel"><div class="tools-row">'+button('export-ledger','匯出明細 CSV')+'</div>'+
+      (rows.length?'<div class="ledger-table section" tabindex="0" role="region" aria-label="個人記帳明細，可左右滑動"><table aria-label="個人記帳明細"><thead><tr>'+
+        L.headers.map(title=>'<th scope="col">'+esc(title)+'</th>').join('')+'</tr></thead><tbody>'+
+        rows.map(row=>'<tr><td>'+esc(row.category)+'</td><td>'+esc(row.date)+'</td><td>'+esc(row.method)+'</td><td>'+esc(row.detail)+
+          '<div class="tools-row"><button type="button" class="btn danger" aria-label="'+esc('移除 '+row.detail)+'" data-action="remove-ledger" data-value="'+esc(row.id)+'">移除</button></div></td>'+
+          '<td>'+esc(row.currency)+'</td><td class="ledger-number">'+L.formatAmount(row.amountCents)+'</td>'+
+          '<td class="ledger-number">'+L.formatAmount(row.twdCents)+ledgerRateDetail(row)+'</td><td>'+esc(row.note)+'</td></tr>').join('')+
+        '</tbody></table></div>':'<p class="muted section">尚無個人記帳。</p>')+'</article>');
+  }
+  const toolTabs=[['currency','匯率換算'],['shopping','購物清單'],['expenses','費用分攤'],['ledger','個人記帳']];
   function toolsView(tab) {
-    const views={currency,shopping:shoppingTool,expenses};
+    const views={currency,shopping:shoppingTool,expenses,ledger:ledgerTool};
     const active=Object.hasOwn(views,tab)?tab:'currency';
     return heading('旅行工具','目前使用者：'+memory.profile)+tabs('tools',toolTabs,active)+views[active]();
   }
@@ -509,6 +584,7 @@
   }
   function changeProfile(name){
     if(!D.members.includes(name))return;
+    expensePerson='';
     memory.profile=name;save();render();notify('已切換至 '+name);
   }
   function usePlan(key,scroll){
@@ -539,18 +615,92 @@
       if(msg)msg.innerHTML='位置已取得。'+ext(url,'在 Google Maps 搜尋附近餐廳');
     },()=>say('無法使用定位。你可以手動選地區搜尋。'),{timeout:10000,maximumAge:30000});
   }
-  function exportShopping(){
-    const rows=me().shopping;
+  function downloadCsv(name,table){
     const quote=cell=>{
       let value=String(cell??'');
-      if(/^[\s]*[=+\-@]|^[\t\r\n]/.test(value))value="'"+value;
+      if(typeof cell==='string'&&/^[\s]*[=+\-@]|^[\t\r\n]/.test(value))value="'"+value;
       return '"'+value.replace(/"/g,'""')+'"';
     };
-    const table=[['商品','品牌','預算 JPY','價格 JPY','約 TWD','已購入','備註','匯率 JPY→TWD','匯率日期'],
-      ...rows.map(r=>[r.name,r.brand,r.budget,r.price,r.price==null?'':Math.round(r.price*fx.value.rate),r.bought?'是':'否',r.note,fx.value.rate,fx.value.date])];
     const url=URL.createObjectURL(new Blob(['\ufeff'+table.map(r=>r.map(quote).join(',')).join('\r\n')],{type:'text/csv;charset=utf-8'}));
-    const a=document.createElement('a');a.href=url;a.download='Tokyo-購物清單-'+memory.profile+'.csv';a.click();
+    const a=document.createElement('a');
+    a.href=url;
+    a.download='Tokyo-'+name+'.csv';
+    document.body.append(a);
+    a.click();
+    a.remove();
     setTimeout(()=>URL.revokeObjectURL(url),1000);
+  }
+  function exportShopping(){
+    downloadCsv('購物清單-'+memory.profile,[['商品','品牌','預算 JPY','價格 JPY','約 TWD','已購入','備註','匯率 JPY→TWD','匯率日期'],
+      ...me().shopping.map(r=>[r.name,r.brand,r.budget,r.price,r.price==null?'':Math.round(r.price*fx.value.rate),r.bought?'是':'否',r.note,fx.value.rate,fx.value.date])]);
+  }
+  function exportExpenses(){
+    const headers=['項目','幣別','原幣金額','代墊人','分攤成員',...D.members.map(name=>name+' 分攤金額')];
+    const rows=visibleExpenses().map(row=>{
+      const split=shares(row);
+      return [row.name,row.currency,row.amount,row.payer,row.people.join('、'),...D.members.map(name=>split[name]??'')];
+    });
+    downloadCsv('費用分攤-'+memory.profile+(expensePerson?'-'+expensePerson:''),[headers,...rows]);
+  }
+  function exportLedger(){
+    const rows=ledgerRows().map(row=>[row.category,row.date,row.method,row.detail,row.currency,row.amountCents/100,row.twdCents/100,row.note]);
+    downloadCsv('個人記帳-'+memory.profile,[L.headers,...rows]);
+  }
+  function updateLedgerFields(form){
+    const custom=form.elements.method.value==='custom';
+    $('#ledger-custom',form).hidden=!custom;
+    form.elements.customMethod.disabled=!custom;
+    form.elements.customMethod.required=custom;
+    const foreign=form.elements.currency.value!=='TWD';
+    const manual=$('#ledger-manual',form);
+    manual.hidden=!foreign;
+    form.elements.manualRate.disabled=!foreign||!manual.open;
+  }
+  async function addLedgerEntry(form,clean){
+    const fieldset=$('fieldset',form);
+    const status=$('#ledger-status',form);
+    if(fieldset.disabled)return;
+    const profile=memory.profile;
+    const category=clean('category');
+    const date=clean('date');
+    const methodChoice=clean('method');
+    const method=methodChoice==='custom'?clean('customMethod'):methodChoice.replace(/^method:/,'');
+    const currency=clean('currency');
+    const detail=clean('detail');
+    const note=clean('note');
+    const amountCents=L.parseAmount(clean('amount'));
+    if(!L.categories.includes(category)||!L.currencies.includes(currency)||!/^\d{4}-\d{2}-\d{2}$/.test(date)||date>L.dateInTaipei()){
+      status.textContent='請確認種類、幣種與付款時間。';return;
+    }
+    if(!method||method.length>50||!detail||detail.length>50||note.length>150){
+      status.textContent='請確認支付方式、支出明細和備注。';return;
+    }
+    if(amountCents===null){
+      status.textContent='請輸入大於 0 的金額，最多 8 位整數與 2 位小數。';return;
+    }
+    const manual=currency==='TWD'?'':clean('manualRate');
+    if(manual&&!L.parseRate(manual)){
+      status.textContent='請輸入有效的正數匯率，最多 8 位小數。';return;
+    }
+    let quote={rate:'1',quoteDate:date,source:'twd'};
+    if(currency!=='TWD'&&manual)quote={rate:manual,quoteDate:date,source:'manual'};
+    if(currency!=='TWD'&&!manual){
+      fieldset.disabled=true;
+      status.textContent='正在查詢付款日的台銀牌告…';
+      try{quote=await L.bankRate(currency,date);}
+      catch{quote=null;}
+      finally{fieldset.disabled=false;}
+      if(!quote){
+        status.textContent='暫時查不到這天的台銀即期賣出匯率。可連網重試，或查台銀後手動填入。';
+        return;
+      }
+    }
+    const entry={
+      id:id(),category,date,method,detail,currency,amountCents,twdCents:L.convert(amountCents,quote.rate),note,...quote
+    };
+    storeLedger(profile,[...ledgerEntries(profile),entry]);
+    if(form.isConnected&&memory.profile===profile)render();
+    notify(canStoreLedger?'已存入 '+profile+' 的個人帳本。':'已加入本次使用的帳本。瀏覽器無法保存，請先匯出 CSV。');
   }
   async function share(){
     if(localFile){notify('離線檔可直接傳送。開啟上線版本後即可分享網址。');return;}
@@ -564,6 +714,12 @@
   function removeRow(key,value){
     me()[key]=me()[key].filter(item=>item.id!==value);
     save();render();notify('已移除。');
+  }
+  function removeLedgerEntry(value){
+    if(!confirm('確定要移除這筆個人支出？'))return;
+    const profile=memory.profile;
+    storeLedger(profile,ledgerEntries(profile).filter(row=>row.id!==value));
+    render();notify('已移除。');
   }
   function editShopping(value){
     const v=me().shopping.find(x=>x.id===value);
@@ -593,9 +749,12 @@
     'reset-fx':()=>{memory.fx=null;fx.value=FX_DEFAULT;fx.message='已恢復離線參考匯率。';save();fxDraw();},
     'cancel-edit':()=>$('#shopping-form').reset(),
     'export-shopping':exportShopping,
+    'export-expenses':exportExpenses,
+    'export-ledger':exportLedger,
     'edit-shop':btn=>editShopping(btn.dataset.value),
     'remove-shop':btn=>removeRow('shopping',btn.dataset.value),
-    'remove-expense':btn=>removeRow('expenses',btn.dataset.value)
+    'remove-expense':btn=>removeRow('expenses',btn.dataset.value),
+    'remove-ledger':btn=>removeLedgerEntry(btn.dataset.value)
   };
   root.addEventListener('click',event=>{
     const btn=event.target.closest('button[data-action]');
@@ -630,6 +789,22 @@
     }
     if(el.id==='rental-plan')usePlan(el.value,false);
     if(el.id==='fx-direction')fxDraw();
+    if(el.id==='expense-person'){
+      expensePerson=el.value;
+      $('#expense-list').innerHTML=expenseList();
+    }
+    if(el.matches('#ledger-form select[name=method],#ledger-form select[name=currency]')){
+      updateLedgerFields(el.form);
+    }
+  });
+  root.addEventListener('toggle',event=>{
+    if(event.target.id==='ledger-manual')updateLedgerFields(event.target.closest('form'));
+  },true);
+  root.addEventListener('focusout',event=>{
+    if(event.target.matches('#ledger-form input[name=amount]')){
+      const cents=L.parseAmount(event.target.value);
+      if(cents!==null)event.target.value=L.formatAmount(cents);
+    }
   });
   root.addEventListener('submit',event=>{
     event.preventDefault();
@@ -660,6 +835,7 @@
       me().expenses.push({id:id(),name,amount,people,payer:clean('payer'),currency:clean('currency')});
       save();render();notify('已加入支出。');
     }
+    if(formId==='ledger-form')addLedgerEntry(form,clean);
   });
   $('#profile').addEventListener('change',e=>changeProfile(e.target.value));
   $('#share').addEventListener('click',share);

@@ -35,12 +35,26 @@ test('the shared agenda retains flight details and the Japan return quote', () =
   assert.equal(airport.out[0].cost[0],16000);
 });
 test('every rental plan matches the complete cost model', () => {
-  assert.equal(plans.length,6);
+  assert.deepEqual(Array.from(plans,p=>p.name.split('｜')[0]),['A','B','C','D 變體','E','基準']);
   for(const p of plans){
     assert.equal(p.numbers.length,fields.length);
     assert.ok(p.numbers.every(Number.isFinite));
     assert.ok(p.numbers.every(n=>n>=0));
   }
+});
+
+test('ledger converts decimal amounts and uses Taiwan payment dates', async () => {
+  runInNewContext(await read('ledger-rates.js'),{window});
+  const ledger=window.TRIP_LEDGER;
+  assert.equal(ledger.dateInTaipei(Date.parse('2026-11-27T16:00:00Z')),'2026-11-28');
+  assert.equal(ledger.formatAmount(ledger.parseAmount('10,000.50')),'10,000.5');
+  assert.equal(ledger.parseAmount('100.001'),null);
+  assert.equal(ledger.parseAmount('10,00'),null);
+  assert.equal(ledger.parseAmount('0'),null);
+  assert.equal(ledger.convert(ledger.parseAmount('10,000'),'0.1988'),198800);
+  assert.equal(ledger.convert(ledger.parseAmount('10,000'),'0.2021'),202100);
+  assert.equal(ledger.convert(ledger.parseAmount('1.01'),'0.5'),51);
+  assert.equal(ledger.convert(ledger.parseAmount('123.45'),'1'),12345);
 });
 test('the Nippon quotes account separately for the two-day toll and one-day Outlet bus', () => {
   const input = id=>Object.fromEntries(fields.map(([key],i)=>[key,plans.find(p=>p.id===id).numbers[i]]));
