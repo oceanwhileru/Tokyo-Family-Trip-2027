@@ -1,2 +1,5 @@
 .DS_Store
+server/node_modules/
+.env*
+client_secret_*.json
 node_modules/

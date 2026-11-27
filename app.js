@@ -3,6 +3,8 @@
   const D = window.TRIP;
   const T = window.TRANSPORT;
   const L = window.TRIP_LEDGER;
+  const cloud = window.TRIP_LEDGER_CLOUD;
+  const cloudLedger = {member:'',rows:[],busy:false,message:''};
   const S = D.src;
   const $ = (q, root = document) => root.querySelector(q);
   const root = $('#content');
@@ -75,7 +77,7 @@
   };
   const when=(day,e)=>Date.parse(day.date+'T'+e.time+':00'+(e.zone==='TST'?'+08:00':'+09:00'));
   const currentRoute=()=>{
-    const [p,t]=location.hash.slice(1).split('/');
+    const [p,t]=location.hash.slice(1).split('?')[0].split('/');
     return {page:pages.some(([id])=>id===p)?p:'home',tab:t};
   };
   function notify(msg) {
@@ -478,7 +480,7 @@
   }
 
   function ledgerMethods() {
-    return [...new Set([...L.methods,...ledgerEntries().map(row=>row.method)])];
+    return [...new Set([...L.methods,...ledgerRows().map(row=>row.method)])];
   }
   function ledgerEntries(profile=memory.profile) {
     if(canStoreLedger){
@@ -496,7 +498,8 @@
     catch{canStoreLedger=false;}
   }
   function ledgerRows() {
-    return [...ledgerEntries()].reverse().sort((a,b)=>b.date.localeCompare(a.date));
+    const rows = cloud?.signedIn ? cloudLedger.rows : ledgerEntries();
+    return [...rows].reverse().sort((a,b)=>b.date.localeCompare(a.date));
   }
   function ledgerRateDetail(row) {
     if(row.currency==='TWD')return '';
@@ -504,10 +507,31 @@
     const source=row.source==='manual'?'手動輸入 · '+row.quoteDate:'台銀 '+row.quoteDate;
     return '<small class="record-meta">'+esc(source+' · '+rate)+'</small>';
   }
+  function ledgerRecords() {
+    const rows=ledgerRows();
+    return '<div class="tools-row">'+button('export-ledger','匯出明細 CSV')+'</div>'+
+      (rows.length?'<div class="ledger-table section" tabindex="0" role="region" aria-label="個人記帳明細，可左右滑動"><table aria-label="個人記帳明細"><thead><tr>'+
+        L.headers.map(title=>'<th scope="col">'+esc(title)+'</th>').join('')+'</tr></thead><tbody>'+
+        rows.map(row=>'<tr><td>'+esc(row.category)+'</td><td>'+esc(row.date)+'</td><td>'+esc(row.method)+'</td><td>'+esc(row.detail)+
+          '<div class="tools-row"><button type="button" class="btn danger" aria-label="'+esc('移除 '+row.detail)+'" data-action="remove-ledger" data-value="'+esc(row.id)+'">移除</button></div></td>'+
+          '<td>'+esc(row.currency)+'</td><td class="ledger-number">'+L.formatAmount(row.amountCents)+'</td>'+
+          '<td class="ledger-number">'+L.formatAmount(row.twdCents)+ledgerRateDetail(row)+'</td><td>'+esc(row.note)+'</td></tr>').join('')+
+        '</tbody></table></div>':'<p class="muted section">尚無個人記帳。</p>');
+  }
+  function ledgerCloudPanel() {
+    if (!cloud) return '<h2>'+esc(memory.profile)+' 的個人帳本</h2><p class="muted">資料保存在這個瀏覽器的個人帳本。若共用同一個瀏覽器，切換姓名即可查看其他本機帳本。</p>';
+    const status='<p role="status" class="form-note small">'+esc(cloudLedger.message)+'</p>';
+    if (!cloud.signedIn) return '<h2>'+esc(memory.profile)+' 的本機帳本</h2><p class="muted">登入同一個 Google 帳號，即可在電腦和手機使用同一本雲端帳本。若從 LINE 開啟時登入受阻，請改用 Safari 或 Chrome 開啟。</p><div class="tools-row">'+
+      button('ledger-login','使用 Google 登入')+'</div>'+status;
+    const member = cloudLedger.member;
+    const count = member ? ledgerEntries(member).length : 0;
+    return '<h2>'+esc(member ? member+' 的雲端帳本' : '個人雲端帳本')+'</h2><p class="muted">雲端帳本依登入帳號辨識。</p><div class="tools-row">'+
+      button('ledger-refresh','重新同步')+(count ? button('ledger-import','匯入本機帳本（'+count+' 筆）') : '')+
+      button('ledger-logout','登出 Google')+'</div>'+status;
+  }
   function ledgerTool() {
     const today=L.dateInTaipei();
-    const rows=ledgerRows();
-    return '<article class="panel"><h2>'+esc(memory.profile)+' 的個人帳本</h2><p class="muted">資料保存在這個瀏覽器的個人帳本。若共用同一個瀏覽器，切換姓名即可查看其他本機帳本。</p>'+
+    return '<article class="panel"><div id="ledger-cloud">'+ledgerCloudPanel()+'</div>'+
       '<form id="ledger-form"><fieldset class="form-grid ledger-fields section" aria-label="新增支出">'+
       '<label>種類<select name="category">'+options(L.categories,L.categories[0])+'</select></label>'+
       '<label>付款時間<input type="date" name="date" required value="'+today+'" max="'+today+'"></label>'+
@@ -523,14 +547,7 @@
       '<p class="record-meta">日圓與美元採付款日的台銀即期賣出牌告，儲存後固定。週末若沿用最近牌告，會標明牌告日期。</p>'+
       links([[S.bank,'資料來源：臺灣銀行牌告匯率'],['https://rate.bot.com.tw/xrt/history','台銀歷史牌告'],['https://app.haotool.org/ratewise/','資料整理：匯率好工具 RateWise（https://app.haotool.org/ratewise/）']])+
       '</article>'+
-      section('個人記帳明細','<article class="panel"><div class="tools-row">'+button('export-ledger','匯出明細 CSV')+'</div>'+
-      (rows.length?'<div class="ledger-table section" tabindex="0" role="region" aria-label="個人記帳明細，可左右滑動"><table aria-label="個人記帳明細"><thead><tr>'+
-        L.headers.map(title=>'<th scope="col">'+esc(title)+'</th>').join('')+'</tr></thead><tbody>'+
-        rows.map(row=>'<tr><td>'+esc(row.category)+'</td><td>'+esc(row.date)+'</td><td>'+esc(row.method)+'</td><td>'+esc(row.detail)+
-          '<div class="tools-row"><button type="button" class="btn danger" aria-label="'+esc('移除 '+row.detail)+'" data-action="remove-ledger" data-value="'+esc(row.id)+'">移除</button></div></td>'+
-          '<td>'+esc(row.currency)+'</td><td class="ledger-number">'+L.formatAmount(row.amountCents)+'</td>'+
-          '<td class="ledger-number">'+L.formatAmount(row.twdCents)+ledgerRateDetail(row)+'</td><td>'+esc(row.note)+'</td></tr>').join('')+
-        '</tbody></table></div>':'<p class="muted section">尚無個人記帳。</p>')+'</article>');
+      section('個人記帳明細','<article class="panel" id="ledger-records">'+ledgerRecords()+'</article>');
   }
   const toolTabs=[['currency','匯率換算'],['shopping','購物清單'],['expenses','費用分攤'],['ledger','個人記帳']];
   function toolsView(tab) {
@@ -644,7 +661,78 @@
   }
   function exportLedger(){
     const rows=ledgerRows().map(row=>[row.category,row.date,row.method,row.detail,row.currency,row.amountCents/100,row.twdCents/100,row.note]);
-    downloadCsv('個人記帳-'+memory.profile,[L.headers,...rows]);
+    downloadCsv('個人記帳-'+(cloudLedger.member||memory.profile),[L.headers,...rows]);
+  }
+  function drawCloudLedger(){
+    const panel=$('#ledger-cloud');
+    if(!panel)return;
+    panel.innerHTML=ledgerCloudPanel();
+    for(const control of panel.querySelectorAll('button'))control.disabled=cloudLedger.busy;
+  }
+  async function loadCloudLedger(){
+    const result=await cloud.read();
+    cloudLedger.member=result.member;
+    cloudLedger.rows=result.rows;
+    const records=$('#ledger-records');
+    if(records)records.innerHTML=ledgerRecords();
+    const method=$('#ledger-form [name=method]');
+    if(method){
+      const selected=method.value;
+      method.innerHTML=ledgerMethods().map(v=>'<option value="method:'+esc(v)+'">'+esc(v)+'</option>').join('')+
+        '<option value="custom">＋ 自訂支付方式</option>';
+      if([...method.options].some(option=>option.value===selected))method.value=selected;
+    }
+  }
+  function clearCloudLedger(message=''){
+    cloud.logout();
+    Object.assign(cloudLedger,{member:'',rows:[],busy:false,message});
+    render();
+  }
+  async function runCloudLedger(action,success=''){
+    if(cloudLedger.busy)return false;
+    cloudLedger.busy=true;
+    cloudLedger.message='同步處理中…';
+    drawCloudLedger();
+    try{
+      await action();
+      cloudLedger.message=success;
+      return true;
+    }catch(error){
+      cloudLedger.message=error.status===401?'登入已過期，請登出後重新登入。':'雲端同步未完成，可稍後重試。';
+      return false;
+    }finally{
+      cloudLedger.busy=false;
+      drawCloudLedger();
+    }
+  }
+  async function importLocalLedger(){
+    const member=cloudLedger.member;
+    if(!member)return;
+    const rows=ledgerEntries(member);
+    if(!rows.length||!confirm('將此瀏覽器的 '+member+' 帳本匯入目前登入的雲端帳號？原本資料會保留。'))return;
+    let added=0;
+    const done=await runCloudLedger(async()=>{
+      for(let offset=0;offset<rows.length;offset+=100){
+        const result=await cloud.add(rows.slice(offset,offset+100));
+        added+=result.added;
+      }
+      await loadCloudLedger();
+    });
+    if(done){
+      cloudLedger.message='匯入完成，新增 '+added+' 筆。';
+      drawCloudLedger();
+    }
+  }
+  async function initCloudLedger(){
+    if(!cloud)return;
+    try{
+      const error=await cloud.acceptReturn();
+      if(error){cloudLedger.message=error;render();return;}
+      if(cloud.signedIn)await runCloudLedger(loadCloudLedger);
+    }catch{
+      cloudLedger.message='登入未完成，請再試一次。';
+      drawCloudLedger();
+    }
   }
   function updateLedgerFields(form){
     const custom=form.elements.method.value==='custom';
@@ -659,8 +747,9 @@
   async function addLedgerEntry(form,clean){
     const fieldset=$('fieldset',form);
     const status=$('#ledger-status',form);
-    if(fieldset.disabled)return;
+    if(fieldset.disabled||cloudLedger.busy)return;
     const profile=memory.profile;
+    const cloudTarget=cloud?.signedIn;
     const category=clean('category');
     const date=clean('date');
     const methodChoice=clean('method');
@@ -698,6 +787,22 @@
     const entry={
       id:id(),category,date,method,detail,currency,amountCents,twdCents:L.convert(amountCents,quote.rate),note,...quote
     };
+    if(cloudTarget){
+      if(!cloud.signedIn||!cloudLedger.member){
+        status.textContent='請先完成雲端帳本登入與同步。';return;
+      }
+      const key=JSON.stringify([category,date,method,detail,currency,amountCents,note,manual]);
+      const pending=form.pendingCloudEntry?.key===key?form.pendingCloudEntry.entry:entry;
+      form.pendingCloudEntry={key,entry:pending};
+      fieldset.disabled=true;
+      const saved=await runCloudLedger(async()=>{
+        await cloud.add([pending]);
+        await loadCloudLedger();
+      },'已存入雲端帳本。');
+      fieldset.disabled=false;
+      if(saved&&form.isConnected)render();
+      return;
+    }
     storeLedger(profile,[...ledgerEntries(profile),entry]);
     if(form.isConnected&&memory.profile===profile)render();
     notify(canStoreLedger?'已存入 '+profile+' 的個人帳本。':'已加入本次使用的帳本。瀏覽器無法保存，請先匯出 CSV。');
@@ -715,8 +820,13 @@
     me()[key]=me()[key].filter(item=>item.id!==value);
     save();render();notify('已移除。');
   }
-  function removeLedgerEntry(value){
+  async function removeLedgerEntry(value){
+    if(cloudLedger.busy)return;
     if(!confirm('確定要移除這筆個人支出？'))return;
+    if(cloud?.signedIn){
+      await runCloudLedger(async()=>{await cloud.remove(value);await loadCloudLedger();},'已移除雲端紀錄。');
+      return;
+    }
     const profile=memory.profile;
     storeLedger(profile,ledgerEntries(profile).filter(row=>row.id!==value));
     render();notify('已移除。');
@@ -754,7 +864,11 @@
     'edit-shop':btn=>editShopping(btn.dataset.value),
     'remove-shop':btn=>removeRow('shopping',btn.dataset.value),
     'remove-expense':btn=>removeRow('expenses',btn.dataset.value),
-    'remove-ledger':btn=>removeLedgerEntry(btn.dataset.value)
+    'remove-ledger':btn=>removeLedgerEntry(btn.dataset.value),
+    'ledger-login':()=>runCloudLedger(()=>cloud.login()),
+    'ledger-logout':()=>clearCloudLedger('已切回本機帳本。'),
+    'ledger-refresh':()=>runCloudLedger(loadCloudLedger,'已重新同步。'),
+    'ledger-import':importLocalLedger
   };
   root.addEventListener('click',event=>{
     const btn=event.target.closest('button[data-action]');
@@ -840,6 +954,12 @@
   $('#profile').addEventListener('change',e=>changeProfile(e.target.value));
   $('#share').addEventListener('click',share);
   $('.skip').addEventListener('click',e=>{e.preventDefault();root.focus();});
-  window.addEventListener('hashchange',()=>render(true));
+  function refreshVisibleLedger(){
+    const {page,tab}=currentRoute();
+    if(!document.hidden&&cloud?.signedIn&&page==='tools'&&tab==='ledger')runCloudLedger(loadCloudLedger);
+  }
+  window.addEventListener('hashchange',()=>{render(true);refreshVisibleLedger();});
+  if(cloud)document.addEventListener('visibilitychange',refreshVisibleLedger);
   render();
+  initCloudLedger();
 })();

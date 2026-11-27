@@ -1,0 +1,5 @@
+.gcloudignore
+node_modules/
+.env*
+client_secret_*.json
+*.test.mjs
